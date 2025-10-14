@@ -8,18 +8,40 @@ import payRoutes from "./routes/pay.js";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+// ✅ CORS — permití solo tu dominio de Vercel
+app.use(
+  cors({
+    origin: ["https://magnetico-app.vercel.app", "http://localhost:5173"],
+    methods: ["GET", "POST"],
+  })
+);
+
 app.use(express.json());
 
+// ✅ Multer en memoria para manejar imágenes
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// ✅ Rutas
 app.use("/api/pay", payRoutes);
 
+// ✅ Webhook de Mercado Pago
+app.post("/api/webhook", express.json(), (req, res) => {
+  try {
+    console.log("🟢 Webhook recibido:", req.body);
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("❌ Error en webhook:", error);
+    res.status(500).send("Error");
+  }
+});
+
+// ✅ Envío de pedido por email
 app.post("/api/orders", upload.array("photos"), async (req, res) => {
   const { name, email } = req.body;
   const files = req.files;
-  if (!email || !files.length)
+
+  if (!email || !files?.length)
     return res.status(400).json({ error: "Faltan datos o archivos." });
 
   try {
@@ -34,7 +56,7 @@ app.post("/api/orders", upload.array("photos"), async (req, res) => {
     }));
 
     await transporter.sendMail({
-      from: `"Magnetico Fotoimanes" <${process.env.EMAIL_USER}>`,
+      from: `"Magnético Fotoimanes" <${process.env.EMAIL_USER}>`,
       to: process.env.DESTINATION_EMAIL,
       subject: `📸 Pedido de ${name || "Cliente"} (${email})`,
       text: `Nombre: ${name}\nEmail: ${email}\nCantidad: ${files.length}`,
@@ -43,9 +65,12 @@ app.post("/api/orders", upload.array("photos"), async (req, res) => {
 
     res.json({ message: "Pedido enviado correctamente" });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error al enviar email:", error);
     res.status(500).json({ error: "Error al enviar el pedido." });
   }
 });
 
-app.listen(5000, () => console.log("🚀 Servidor corriendo en puerto 5000"));
+// ✅ Render usa process.env.PORT, no puerto fijo
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
+

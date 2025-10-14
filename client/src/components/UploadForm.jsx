@@ -28,7 +28,7 @@ export default function UploadForm() {
       setLoading(true);
       setMessage("🔄 Conectando con Mercado Pago...");
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE}/api/pay`,
+        "https://magnetico-server.onrender.com/api/pay",
         { name, email }
       );
       // 🔁 Redirigir al checkout de Mercado Pago
