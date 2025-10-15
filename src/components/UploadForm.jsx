@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import logo from "../assets/magnetocp.jpg";
+import logo from "../../public/magnetocp.jpg";
 
 export default function UploadForm() {
   const [files, setFiles] = useState([]);
@@ -9,29 +9,25 @@ export default function UploadForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // 🖼 Manejo de archivos y vista previa
+  const PRODUCT_PRICE = import.meta.env.VITE_DEFAULT_PRICE || 2000;
+
   const handleFiles = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles(selectedFiles);
+    const selected = Array.from(e.target.files);
+    setFiles(selected);
   };
 
-  // 🔹 PASO 1: Preparar pedido y redirigir al pago
-  const handlePreparePayment = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!files.length || !email) return alert("Completá todos los campos.");
-
-    // Guardar pedido temporal en localStorage
-    const data = { name, email };
-    localStorage.setItem("pendingOrder", JSON.stringify(data));
 
     try {
       setLoading(true);
       setMessage("🔄 Conectando con Mercado Pago...");
-      const res = await axios.post(
-        "https://magnetico-server.onrender.com/api/pay",
-        { name, email }
-      );
-      // 🔁 Redirigir al checkout de Mercado Pago
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pay`, {
+        name,
+        email,
+        price: PRODUCT_PRICE,
+      });
       window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${res.data.id}`;
     } catch (error) {
       console.error(error);
@@ -42,7 +38,7 @@ export default function UploadForm() {
 
   return (
     <form
-      onSubmit={handlePreparePayment}
+      onSubmit={handleSubmit}
       style={{
         backgroundColor: "#fff",
         padding: "2rem",
@@ -58,7 +54,7 @@ export default function UploadForm() {
       <div style={{ width: "295px", height: "200px", margin: "0 auto 10px" }}>
         <img
           src={logo}
-          alt="Logo Magnético"
+          alt="Magnético"
           style={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
       </div>
@@ -66,7 +62,6 @@ export default function UploadForm() {
       <h2>Magnético Fotoimanes</h2>
       <p>Subí tus fotos (78×53 mm) y completá tu pedido</p>
 
-      {/* Inputs */}
       <input
         type="text"
         placeholder="Tu nombre"
@@ -104,7 +99,7 @@ export default function UploadForm() {
         style={{ marginBottom: "12px" }}
       />
 
-      {/* 🖼 Vista previa */}
+      {/* Vista previa */}
       {files.length > 0 && (
         <div
           style={{
@@ -132,7 +127,6 @@ export default function UploadForm() {
         </div>
       )}
 
-      {/* Botón */}
       <button
         type="submit"
         disabled={loading}
@@ -150,10 +144,7 @@ export default function UploadForm() {
         {loading ? "Conectando con Mercado Pago..." : "Ir al Pago"}
       </button>
 
-      {/* Mensaje */}
-      {message && (
-        <p style={{ marginTop: "10px", color: "#333" }}>{message}</p>
-      )}
+      {message && <p style={{ marginTop: "10px" }}>{message}</p>}
     </form>
   );
 }

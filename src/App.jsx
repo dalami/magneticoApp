@@ -1,5 +1,6 @@
 import React from "react";
-import UploadForm from "./components/UploadForm";
+import UploadForm from "./components/UploadForm.jsx";
+import "./style.css";
 
 export default function App() {
   return (
@@ -14,12 +15,6 @@ export default function App() {
         fontFamily: "Poppins, sans-serif",
       }}
     >
-      <h1 style={{ fontSize: "2rem", color: "#222", marginBottom: "0.5rem" }}>
-        Magnético Fotoimanes
-      </h1>
-      <p style={{ color: "#555", marginBottom: "1rem" }}>
-        Subí tus fotos y completá tu pedido en segundos
-      </p>
       <UploadForm />
     </div>
   );
