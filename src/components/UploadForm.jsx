@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import logo from "/magnetocp.jpg"; 
+import logo from "/magnetocp.jpg";
 
 export default function UploadForm() {
   const [files, setFiles] = useState([]);
@@ -9,14 +9,10 @@ export default function UploadForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // ✅ Variables de entorno seguras
-  const PRODUCT_PRICE = import.meta.env.VITE_DEFAULT_PRICE || 2000;
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const PRODUCT_PRICE = Number(import.meta.env.VITE_DEFAULT_PRICE) || 2000;
+  const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/,"");
 
-  const handleFiles = (e) => {
-    const selected = Array.from(e.target.files);
-    setFiles(selected);
-  };
+  const handleFiles = (e) => setFiles(Array.from(e.target.files || []));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,21 +22,21 @@ export default function UploadForm() {
       setLoading(true);
       setMessage("🔄 Conectando con Mercado Pago...");
 
-      // ✅ Uso de la variable API_URL centralizada
-      const res = await axios.post(`${API_URL}/api/pay`, {
+      const { data } = await axios.post(`${API_URL}/api/pay`, {
         name,
         email,
         price: PRODUCT_PRICE,
       });
 
-      // ✅ Redirección segura a Mercado Pago
-      if (res.data && res.data.id) {
-        window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${res.data.id}`;
+      if (data?.init_point) {
+        window.location.href = data.init_point;
+      } else if (data?.id) {
+        window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
       } else {
         throw new Error("Respuesta inválida del servidor.");
       }
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error("❌ Error:", error?.response?.data || error.message);
       setMessage("❌ No se pudo iniciar el pago.");
     } finally {
       setLoading(false);
@@ -61,30 +57,19 @@ export default function UploadForm() {
         fontFamily: "Poppins, sans-serif",
       }}
     >
-      {/* Logo */}
       <div style={{ width: "295px", height: "200px", margin: "0 auto 10px" }}>
-        <img
-          src={logo}
-          alt="Magnético"
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-        />
+        <img src={logo} alt="Magnético" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       </div>
 
-      <h2>Magnético Fotoimanes</h2>
-      <p>Subí tus fotos (78×53 mm) y completá tu pedido</p>
+      <h2 style={{ margin: 0 }}>Magnético Fotoimanes</h2>
+      <p style={{ marginTop: 6 }}>Subí tus fotos (78×53 mm) y completá tu pedido</p>
 
       <input
         type="text"
         placeholder="Tu nombre"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        style={{
-          width: "100%",
-          marginBottom: "8px",
-          padding: "8px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-        }}
+        style={{ width: "100%", marginBottom: 8, padding: 8, border: "1px solid #ccc", borderRadius: 6 }}
       />
 
       <input
@@ -92,50 +77,36 @@ export default function UploadForm() {
         placeholder="Tu email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        style={{
-          width: "100%",
-          marginBottom: "8px",
-          padding: "8px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-        }}
+        style={{ width: "100%", marginBottom: 8, padding: 8, border: "1px solid #ccc", borderRadius: 6 }}
         required
       />
 
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleFiles}
-        style={{ marginBottom: "12px" }}
-      />
+      <input type="file" multiple accept="image/*" onChange={handleFiles} style={{ marginBottom: 12, width: "100%" }} />
 
-      {/* Vista previa */}
       {files.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
-            gap: "8px",
-            marginBottom: "15px",
-          }}
-        >
-          {files.map((file, index) => (
-            <div key={index} style={{ position: "relative" }}>
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`foto-${index}`}
-                style={{
-                  width: "100%",
-                  height: "70px",
-                  objectFit: "cover",
-                  borderRadius: "8px",
-                  border: "1px solid #ddd",
-                }}
-              />
-            </div>
-          ))}
-        </div>
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            {files.map((file, i) => (
+              <div key={i}>
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={`foto-${i}`}
+                  style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: 8, border: "1px solid #ddd" }}
+                />
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: "#555", marginTop: -4 }}>
+            {files.length} foto{files.length > 1 ? "s" : ""} seleccionada{files.length > 1 ? "s" : ""}.
+          </p>
+        </>
       )}
 
       <button
@@ -146,16 +117,16 @@ export default function UploadForm() {
           color: "#000",
           border: "none",
           padding: "10px 20px",
-          borderRadius: "8px",
+          borderRadius: 8,
           width: "100%",
-          fontWeight: "600",
+          fontWeight: 600,
           cursor: loading ? "not-allowed" : "pointer",
         }}
       >
         {loading ? "Conectando con Mercado Pago..." : "Ir al Pago"}
       </button>
 
-      {message && <p style={{ marginTop: "10px" }}>{message}</p>}
+      {message && <p style={{ marginTop: 10 }}>{message}</p>}
     </form>
   );
 }
