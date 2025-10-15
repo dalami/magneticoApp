@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import logo from "../../public/magnetocp.jpg";
+import logo from "/magnetocp.jpg"; 
 
 export default function UploadForm() {
   const [files, setFiles] = useState([]);
@@ -9,7 +9,9 @@ export default function UploadForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // ✅ Variables de entorno seguras
   const PRODUCT_PRICE = import.meta.env.VITE_DEFAULT_PRICE || 2000;
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const handleFiles = (e) => {
     const selected = Array.from(e.target.files);
@@ -23,15 +25,24 @@ export default function UploadForm() {
     try {
       setLoading(true);
       setMessage("🔄 Conectando con Mercado Pago...");
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pay`, {
+
+      // ✅ Uso de la variable API_URL centralizada
+      const res = await axios.post(`${API_URL}/api/pay`, {
         name,
         email,
         price: PRODUCT_PRICE,
       });
-      window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${res.data.id}`;
+
+      // ✅ Redirección segura a Mercado Pago
+      if (res.data && res.data.id) {
+        window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${res.data.id}`;
+      } else {
+        throw new Error("Respuesta inválida del servidor.");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("❌ Error:", error);
       setMessage("❌ No se pudo iniciar el pago.");
+    } finally {
       setLoading(false);
     }
   };
