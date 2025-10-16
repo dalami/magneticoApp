@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import logo from "/magnetocp.jpg";
+import { useEffect } from "react";
 
 export default function UploadForm() {
   const [files, setFiles] = useState([]);
@@ -42,6 +43,11 @@ export default function UploadForm() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+  const url = (import.meta.env.VITE_API_URL || "").replace(/\/+$/,"");
+  console.log("[Front] VITE_API_URL =", url || "(vacío)");
+  window.__API_URL__ = url;
+}, []);
 
   return (
     <form
