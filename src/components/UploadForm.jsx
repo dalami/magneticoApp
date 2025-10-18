@@ -18,9 +18,11 @@ export default function UploadForm() {
   const [price, setPrice] = useState(2000);
   const [priceLoading, setPriceLoading] = useState(true);
   
-  // 🔥 NUEVOS ESTADOS PARA REDIRECCIÓN
   const [mpUrl, setMpUrl] = useState("");
   const [showManualRedirect, setShowManualRedirect] = useState(false);
+
+  // 🔄 ESTADO PARA ROTACIÓN EN EL MODAL
+  const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -63,7 +65,7 @@ export default function UploadForm() {
     setPhotos(prev => [...prev, ...files]);
     setError("");
     setSuccess("");
-    setShowManualRedirect(false); // Resetear redirección manual
+    setShowManualRedirect(false);
   };
 
   const removePhoto = (index) => {
@@ -71,16 +73,50 @@ export default function UploadForm() {
     setError("");
   };
 
-  const getCroppedImg = useCallback(async (imageSrc, cropAreaPixels) => {
+  // 🔄 FUNCIÓN PARA GIRAR FOTO EN MINIATURA
+  const rotatePhoto = (index, degrees = 90) => {
+    setPhotos(prev => prev.map((file, i) => {
+      if (i === index) {
+        const rotatedFile = new File([file], file.name, { 
+          type: file.type,
+          lastModified: new Date().getTime()
+        });
+        rotatedFile._rotation = ((file._rotation || 0) + degrees) % 360;
+        return rotatedFile;
+      }
+      return file;
+    }));
+  };
+
+  // 🔄 FUNCIÓN MEJORADA PARA RECORTAR CON ROTACIÓN
+  const getCroppedImg = useCallback(async (imageSrc, cropAreaPixels, rotation = 0) => {
     return new Promise((resolve) => {
       const image = new Image();
       image.src = imageSrc;
       image.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        canvas.width = cropAreaPixels.width;
-        canvas.height = cropAreaPixels.height;
         
+        // Calcular dimensiones del canvas basado en la rotación
+        const radians = (rotation * Math.PI) / 180;
+        const sin = Math.abs(Math.sin(radians));
+        const cos = Math.abs(Math.cos(radians));
+        
+        const width = cropAreaPixels.width;
+        const height = cropAreaPixels.height;
+        
+        // Nuevas dimensiones considerando la rotación
+        const newWidth = width * cos + height * sin;
+        const newHeight = width * sin + height * cos;
+        
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        
+        ctx.translate(newWidth / 2, newHeight / 2);
+        ctx.rotate(radians);
+        ctx.translate(-width / 2, -height / 2);
+        
+        // Dibujar imagen recortada y rotada
         ctx.drawImage(
           image,
           cropAreaPixels.x,
@@ -89,8 +125,8 @@ export default function UploadForm() {
           cropAreaPixels.height,
           0,
           0,
-          canvas.width,
-          canvas.height
+          width,
+          height
         );
         
         canvas.toBlob(resolve, "image/jpeg", 0.9);
@@ -108,12 +144,15 @@ export default function UploadForm() {
     try {
       const file = photos[cropIndex];
       const imageUrl = URL.createObjectURL(file);
-      const blob = await getCroppedImg(imageUrl, croppedAreaPixels);
+      const blob = await getCroppedImg(imageUrl, croppedAreaPixels, rotation);
       
       const croppedFile = new File([blob], file.name, { 
         type: "image/jpeg",
         lastModified: new Date().getTime()
       });
+      
+      // 🔄 PRESERVAR LA ROTACIÓN EXISTENTE DE LA MINIATURA
+      croppedFile._rotation = (file._rotation || 0) + rotation;
       
       setPhotos((prev) =>
         prev.map((f, i) => (i === cropIndex ? croppedFile : f))
@@ -121,6 +160,7 @@ export default function UploadForm() {
       setCropIndex(null);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
+      setRotation(0);
       
       URL.revokeObjectURL(imageUrl);
     } catch (error) {
@@ -129,7 +169,14 @@ export default function UploadForm() {
     }
   };
 
-  // 🔥 FUNCIÓN PRINCIPAL ACTUALIZADA CON BOTÓN MANUAL
+  // 🔄 FUNCIÓN PARA GIRAR EN EL MODAL
+  const rotateInModal = (degrees = 90) => {
+    setRotation(prev => {
+      const newRotation = (prev + degrees) % 360;
+      return newRotation < 0 ? newRotation + 360 : newRotation;
+    });
+  };
+
   const handleSendPhotos = async () => {
     setError("");
     setSuccess("");
@@ -183,19 +230,16 @@ export default function UploadForm() {
         console.log("🎯 URL de Mercado Pago:", mercadoPagoUrl);
         setSuccess("✅ ¡Pedido exitoso! Redirigiendo a Mercado Pago...");
 
-        // 🔥 PRIMER INTENTO DE REDIRECCIÓN (automática)
         setTimeout(() => {
           console.log("🔗 Redirigiendo automáticamente...");
           window.location.href = mercadoPagoUrl;
         }, 100);
 
-        // 🔥 SEGUNDO INTENTO (más agresivo)
         setTimeout(() => {
           console.log("🔗 Segundo intento de redirección...");
           window.location.replace(mercadoPagoUrl);
         }, 800);
 
-        // 🔥 MOSTRAR BOTÓN MANUAL SI NO REDIRIGE EN 2 SEGUNDOS
         setTimeout(() => {
           setShowManualRedirect(true);
           setSuccess("✅ ¡Pedido exitoso! Si no te redirige automáticamente, hacé clic en el botón 'IR A MERCADO PAGO'");
@@ -226,7 +270,6 @@ export default function UploadForm() {
     }
   };
 
-  // 🔥 FUNCIÓN PARA REDIRECCIÓN MANUAL
   const handleManualRedirect = () => {
     if (mpUrl) {
       console.log("🔗 Redirigiendo manualmente a:", mpUrl);
@@ -273,7 +316,7 @@ export default function UploadForm() {
         Magnético Fotoimanes
       </h2>
       <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: 20 }}>
-        Subí tus fotos, recortalas al formato 78×53 mm y completá tu pedido ✨
+        Subí tus fotos, recortalas y giralas al formato 78×53 mm ✨
       </p>
 
       <input
@@ -345,8 +388,15 @@ export default function UploadForm() {
                     objectFit: "cover",
                     border: "2px solid #ccc",
                     cursor: "pointer",
+                    transform: `rotate(${p._rotation || 0}deg)`,
+                    transition: "transform 0.3s ease"
                   }}
-                  onClick={() => !loading && setCropIndex(i)}
+                  onClick={() => {
+                    if (!loading) {
+                      setCropIndex(i);
+                      setRotation(p._rotation || 0); // 🔄 CARGAR ROTACIÓN EXISTENTE
+                    }
+                  }}
                 />
                 <button
                   onClick={() => !loading && removePhoto(i)}
@@ -363,11 +413,42 @@ export default function UploadForm() {
                     color: "#C0392B",
                     fontWeight: 700,
                     opacity: loading ? 0.5 : 1,
+                    zIndex: 2
                   }}
                   title="Eliminar foto"
                   disabled={loading}
                 >
                   ×
+                </button>
+                {/* 🔄 BOTÓN PARA GIRAR FOTO EN MINIATURA */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    !loading && rotatePhoto(i, 90);
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: 5,
+                    left: 5,
+                    background: "rgba(255,255,255,0.9)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: 24,
+                    height: 24,
+                    cursor: loading ? "not-allowed" : "pointer",
+                    color: "#BCA88F",
+                    fontWeight: "bold",
+                    opacity: loading ? 0.5 : 1,
+                    zIndex: 2,
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  title="Girar 90°"
+                  disabled={loading}
+                >
+                  ⟳
                 </button>
               </div>
             ))}
@@ -400,7 +481,6 @@ export default function UploadForm() {
         </div>
       )}
 
-      {/* 🔥 BOTÓN DE REDIRECCIÓN MANUAL A MERCADO PAGO */}
       {showManualRedirect && mpUrl && (
         <button
           onClick={handleManualRedirect}
@@ -469,21 +549,77 @@ export default function UploadForm() {
       {cropIndex !== null && (
         <div style={modalOverlay}>
           <div style={modalContent}>
-            <div style={{ position: "relative", width: "100%", height: "100%" }}>
-              <Cropper
-                image={URL.createObjectURL(photos[cropIndex])}
-                crop={crop}
-                zoom={zoom}
-                aspect={78 / 53}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={handleCropComplete}
-              />
+            <div style={{ 
+              position: "relative", 
+              width: "100%", 
+              height: "100%",
+              display: "flex",
+              flexDirection: "column"
+            }}>
+              {/* 🔄 CONTROLES DE ROTACIÓN EN EL MODAL */}
+              <div style={{
+                padding: "10px",
+                background: "#2a2a2a",
+                display: "flex",
+                justifyContent: "center",
+                gap: "10px",
+                alignItems: "center",
+                flexWrap: "wrap"
+              }}>
+                <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>
+                  Rotación: {rotation}°
+                </span>
+                <button 
+                  onClick={() => rotateInModal(-90)}
+                  style={rotateButtonStyle}
+                  title="Girar 90° a la izquierda"
+                >
+                  ↶ 90°
+                </button>
+                <button 
+                  onClick={() => rotateInModal(90)}
+                  style={rotateButtonStyle}
+                  title="Girar 90° a la derecha"
+                >
+                  ↷ 90°
+                </button>
+                <button 
+                  onClick={() => setRotation(0)}
+                  style={{...rotateButtonStyle, background: "#666"}}
+                  title="Resetear rotación"
+                >
+                  ⟲ 0°
+                </button>
+              </div>
+
+              <div style={{ flex: 1, position: "relative" }}>
+                <Cropper
+                  image={URL.createObjectURL(photos[cropIndex])}
+                  crop={crop}
+                  zoom={zoom}
+                  rotation={rotation} // 🔄 ESTA PROP SÍ DEBE FUNCIONAR
+                  aspect={78 / 53}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={handleCropComplete}
+                  style={{
+                    containerStyle: {
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      backgroundColor: "#000",
+                    }
+                  }}
+                />
+              </div>
             </div>
             <div style={modalButtons}>
               <button 
                 style={btnCancel} 
-                onClick={() => setCropIndex(null)}
+                onClick={() => {
+                  setCropIndex(null);
+                  setRotation(0);
+                }}
                 disabled={loading}
               >
                 Cancelar
@@ -550,7 +686,7 @@ const modalContent = {
   position: "relative",
   width: "90vw",
   maxWidth: "500px",
-  height: "70vh",
+  height: "80vh",
   background: "#000",
   borderRadius: "12px",
   overflow: "hidden",
@@ -584,4 +720,16 @@ const btnSave = {
   borderRadius: "8px",
   cursor: "pointer",
   flex: 1,
+};
+
+const rotateButtonStyle = {
+  background: "#BCA88F",
+  color: "white",
+  border: "none",
+  padding: "8px 12px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: "bold",
+  minWidth: "70px"
 };
