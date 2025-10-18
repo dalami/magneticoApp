@@ -399,7 +399,7 @@ export default function UploadForm() {
         />
 
         <textarea
-          placeholder="Tu dirección para el envío"
+          placeholder="Tu dirección para el envío(Localidad,provincia,CP)"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           style={{...inputStyle, minHeight: "80px", resize: "vertical"}}
