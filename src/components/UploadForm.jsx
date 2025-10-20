@@ -391,7 +391,7 @@ export default function UploadForm() {
 
         <input
           type="tel"
-          placeholder="Tu teléfono (opcional)"
+          placeholder="Tu teléfono"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           style={inputStyle}
