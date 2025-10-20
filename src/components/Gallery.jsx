@@ -1,6 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Gallery = ({ onCtaClick }) => {
+const Gallery = () => {
+  const navigate = useNavigate();
+
+  const handleCtaClick = () => {
+    navigate('/crear-fotoimanes');
+  };
+
   const galleryItems = [
     { id: 1, title: 'Familia', bgColor: 'bg-purple-200' },
     { id: 2, title: 'Mascotas', bgColor: 'bg-blue-200' },
@@ -22,24 +29,27 @@ const Gallery = ({ onCtaClick }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {galleryItems.map((item) => (
-            <div key={item.id} className="gallery-item rounded-xl overflow-hidden shadow-lg">
-              <div className={`w-full h-64 ${item.bgColor} flex items-center justify-center`}>
-                <span className="text-gray-700">{item.title}</span>
-              </div>
-              <div className="overlay">
-                <span className="text-white font-medium text-lg">{item.title}</span>
+            <div 
+              key={item.id} 
+              className="rounded-xl overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105"
+            >
+              <div className={`w-full h-64 ${item.bgColor} flex items-center justify-center relative group`}>
+                <span className="text-gray-700 text-lg font-medium">{item.title}</span>
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="text-white font-medium text-lg">{item.title}</span>
+                </div>
               </div>
             </div>
           ))}
         </div>
+
         <div className="text-center mt-12">
-          <a 
-            href="#" 
+          <button 
+            onClick={handleCtaClick}
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full inline-block transition duration-300"
-            onClick={onCtaClick}
           >
             Crear Mis Fotoimanes
-          </a>
+          </button>
         </div>
       </div>
     </section>

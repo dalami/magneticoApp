@@ -16,7 +16,7 @@ const Footer = ({ onSmoothScroll }) => {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4">Enlaces Rápidos</h3>
+            <h3 className="text-lg font-bold mb-4 text-white">Enlaces Rápidos</h3>
             <ul className="space-y-2">
               <li>
                 <a 
@@ -50,7 +50,7 @@ const Footer = ({ onSmoothScroll }) => {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4">Legal</h3>
+            <h3 className="text-lg font-bold mb-4 text-white">Legal</h3>
             <ul className="space-y-2">
               <li><a href="#" className="text-gray-400 hover:text-white transition">Términos y Condiciones</a></li>
               <li><a href="#" className="text-gray-400 hover:text-white transition">Política de Privacidad</a></li>
@@ -59,7 +59,7 @@ const Footer = ({ onSmoothScroll }) => {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4">Contacto</h3>
+            <h3 className="text-lg font-bold mb-4 text-white">Contacto</h3>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <i className="fas fa-envelope text-gray-400 mr-2"></i>

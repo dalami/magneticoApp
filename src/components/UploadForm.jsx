@@ -3,8 +3,10 @@ import Cropper from "react-easy-crop";
 import { api } from "../Lib/api.js";
 import { fmtARS } from "../Lib/currency.js";
 import logo from "/magnetocp.jpg";
+import { useNavigate } from "react-router-dom";
 
 export default function UploadForm() {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,6 +25,11 @@ export default function UploadForm() {
   const [mpUrl, setMpUrl] = useState("");
   const [showManualRedirect, setShowManualRedirect] = useState(false);
   const [rotation, setRotation] = useState(0);
+
+  // 🔥 FUNCIÓN PARA VOLVER AL INICIO
+  const handleGoBack = () => {
+    navigate('/');
+  };
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -345,8 +352,46 @@ export default function UploadForm() {
         margin: "2rem auto",
         textAlign: "center",
         fontFamily: "Poppins, sans-serif",
+        position: "relative"
       }}
     >
+      {/* 🔥 BOTÓN VOLVER - ESQUINA SUPERIOR IZQUIERDA */}
+      <button
+        onClick={handleGoBack}
+        style={{
+          position: "absolute",
+          top: "15px",
+          left: "15px",
+          background: "#f8f9fa",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "8px 12px",
+          cursor: "pointer",
+          fontSize: "0.8rem",
+          fontWeight: "500",
+          color: "#555",
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+          transition: "all 0.3s ease",
+          zIndex: 10
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = "#e9ecef";
+          e.target.style.color = "#333";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = "#f8f9fa";
+          e.target.style.color = "#555";
+        }}
+        disabled={loading}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Volver
+      </button>
+
       <img
         src={logo}
         alt="Magnético"
@@ -623,6 +668,36 @@ export default function UploadForm() {
           `📤 Enviar ${photos.length} Foto${photos.length > 1 ? 's' : ''} y Pagar ${fmtARS(total)}`
         )}
       </button>
+
+      {/* 🔥 BOTÓN VOLVER ADICIONAL AL FINAL */}
+      <div style={{ marginTop: "15px" }}>
+        <button
+          onClick={handleGoBack}
+          style={{
+            background: "transparent",
+            border: "1px solid #ddd",
+            color: "#666",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "0.9rem",
+            fontWeight: "500",
+            transition: "all 0.3s ease",
+            width: "100%"
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = "#f8f9fa";
+            e.target.style.color = "#333";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = "transparent";
+            e.target.style.color = "#666";
+          }}
+          disabled={loading}
+        >
+          ← Volver al Inicio
+        </button>
+      </div>
 
       {/* Modal de recorte */}
       {cropIndex !== null && (

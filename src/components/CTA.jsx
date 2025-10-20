@@ -1,6 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const CTA = ({ onCtaClick }) => {
+const CTA = () => {
+  const navigate = useNavigate();
+
+  const handleCtaClick = () => {
+    navigate('/crear-fotoimanes');
+  };
+
   return (
     <section className="py-16 hero-bg text-white">
       <div className="container mx-auto px-4 text-center">
@@ -8,13 +15,12 @@ const CTA = ({ onCtaClick }) => {
         <p className="text-xl mb-8 max-w-2xl mx-auto">
           Sube tus fotos ahora y en pocos días tendrás tus momentos favoritos convertidos en imanes únicos.
         </p>
-        <a 
-          href="#" 
+        <button 
+          onClick={handleCtaClick}
           className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-4 px-10 rounded-full text-lg inline-block transition duration-300"
-          onClick={onCtaClick}
         >
           Comenzar a Crear
-        </a>
+        </button>
       </div>
     </section>
   );

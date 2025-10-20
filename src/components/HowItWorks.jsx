@@ -1,24 +1,37 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const HowItWorks = ({ onCtaClick }) => {
+const HowIWork = () => {
+  const navigate = useNavigate();
+
+  const handleCtaClick = () => {
+    navigate('/crear-fotoimanes');
+  };
+
   const steps = [
     {
-      icon: 'fas fa-cloud-upload-alt',
-      color: 'purple',
-      title: '1. Sube tus fotos',
-      description: 'Selecciona las mejores fotos desde tu dispositivo. Aceptamos los formatos más comunes.'
+      id: 1,
+      title: "1. Sube tus fotos",
+      description: "Selecciona las mejores fotos desde tu dispositivo. Aceptamos los formatos más comunes.",
+      icon: "fas fa-cloud-upload-alt",
+      iconColor: "text-purple-600",
+      bgColor: "bg-purple-100"
     },
     {
-      icon: 'fas fa-edit',
-      color: 'blue',
-      title: '2. Personaliza',
-      description: 'Elige el tamaño, forma y cantidad. Añade textos o marcos si lo deseas.'
+      id: 2,
+      title: "2. Personaliza",
+      description: "Elige el tamaño, forma y cantidad. Añade textos o marcos si lo deseas.",
+      icon: "fas fa-edit",
+      iconColor: "text-blue-600",
+      bgColor: "bg-blue-100"
     },
     {
-      icon: 'fas fa-shipping-fast',
-      color: 'green',
-      title: '3. Recibe en casa',
-      description: 'Realiza el pago de forma segura y recibe tus fotoimanes en la puerta de tu hogar.'
+      id: 3,
+      title: "3. Recibe en casa",
+      description: "Realiza el pago de forma segura y recibe tus fotoimanes en la puerta de tu hogar.",
+      icon: "fas fa-shipping-fast",
+      iconColor: "text-green-600",
+      bgColor: "bg-green-100"
     }
   ];
 
@@ -31,10 +44,13 @@ const HowItWorks = ({ onCtaClick }) => {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {steps.map((step, index) => (
-            <div key={index} className="step-card bg-white p-8 rounded-2xl shadow-lg text-center">
-              <div className={`w-20 h-20 bg-${step.color}-100 rounded-full flex items-center justify-center mx-auto mb-6`}>
-                <i className={`${step.icon} text-${step.color}-600 text-3xl`}></i>
+          {steps.map((step) => (
+            <div 
+              key={step.id} 
+              className="bg-white p-8 rounded-2xl shadow-lg text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl"
+            >
+              <div className={`w-20 h-20 ${step.bgColor} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                <i className={`${step.icon} ${step.iconColor} text-3xl`}></i>
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">{step.title}</h3>
               <p className="text-gray-600">{step.description}</p>
@@ -43,17 +59,16 @@ const HowItWorks = ({ onCtaClick }) => {
         </div>
 
         <div className="text-center mt-12">
-          <a 
-            href="#" 
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full inline-block transition duration-300"
-            onClick={onCtaClick}
+          <button 
+            onClick={handleCtaClick}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full inline-block transition duration-300 transform hover:scale-105"
           >
             Comenzar Ahora
-          </a>
+          </button>
         </div>
       </div>
     </section>
   );
 };
 
-export default HowItWorks;
+export default HowIWork;

@@ -236,6 +236,36 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// 🚀 Componente wrapper para Landing con navegación
+function LandingWithNavigation() {
+  const handleCtaClick = (e) => {
+    e.preventDefault();
+    
+    // Crear URL absoluta
+    const currentUrl = new URL(window.location.href);
+    const uploadUrl = `${currentUrl.origin}/crear-fotoimanes`;
+    
+    // Forzar apertura en nueva pestaña
+    window.open(uploadUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // Función para scroll suave
+  const handleSmoothScroll = (e, targetId) => {
+    e.preventDefault();
+    const element = document.querySelector(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <Landing 
+      onCtaClick={handleCtaClick} 
+      onSmoothScroll={handleSmoothScroll} 
+    />
+  );
+}
+
 // 🚀 Componente principal de la aplicación
 export default function App() {
   return (
@@ -246,10 +276,11 @@ export default function App() {
 
         <AppLayout>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            {/* Ruta principal que usa el componente Landing */}
+            <Route path="/" element={<LandingWithNavigation />} />
 
-            {/* Página principal - Formulario de subida */}
-            <Route path="/" element={<UploadForm />} />
+            {/* Ruta para el formulario de subida */}
+            <Route path="/crear-fotoimanes" element={<UploadForm />} />
 
             {/* Página de éxito después del pago */}
             <Route path="/success" element={<SuccessPage />} />
