@@ -1,0 +1,49 @@
+import React from 'react';
+
+const Gallery = ({ onCtaClick }) => {
+  const galleryItems = [
+    { id: 1, title: 'Familia', bgColor: 'bg-purple-200' },
+    { id: 2, title: 'Mascotas', bgColor: 'bg-blue-200' },
+    { id: 3, title: 'Bodas', bgColor: 'bg-green-200' },
+    { id: 4, title: 'Viajes', bgColor: 'bg-yellow-200' },
+    { id: 5, title: 'Amigos', bgColor: 'bg-red-200' },
+    { id: 6, title: 'Eventos', bgColor: 'bg-indigo-200' },
+    { id: 7, title: 'Corporativo', bgColor: 'bg-pink-200' },
+    { id: 8, title: 'Vacaciones', bgColor: 'bg-teal-200' }
+  ];
+
+  return (
+    <section id="galeria" className="py-16 bg-white">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">Nuestros Fotoimanes</h2>
+        <p className="text-xl text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          Descubre la variedad de diseños y estilos que puedes crear con tus fotos favoritas.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {galleryItems.map((item) => (
+            <div key={item.id} className="gallery-item rounded-xl overflow-hidden shadow-lg">
+              <div className={`w-full h-64 ${item.bgColor} flex items-center justify-center`}>
+                <span className="text-gray-700">{item.title}</span>
+              </div>
+              <div className="overlay">
+                <span className="text-white font-medium text-lg">{item.title}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-12">
+          <a 
+            href="#" 
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full inline-block transition duration-300"
+            onClick={onCtaClick}
+          >
+            Crear Mis Fotoimanes
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Gallery;

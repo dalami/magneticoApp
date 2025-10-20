@@ -1,11 +1,20 @@
 // App.jsx
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+
+import Landing from "./pages/Landing.jsx"
 import UploadForm from "./components/UploadForm.jsx";
 import SuccessPage from "./pages/SuccessPage.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
 import { ApiUtils } from "./Lib/api.js";
 import "./style.css";
+import "./App.css"
 
 // 🎯 Componente para tracking de analytics y manejo de errores global
 function RouteTracker() {
@@ -15,9 +24,9 @@ function RouteTracker() {
   // 📊 Tracking de página (simplificado para desarrollo)
   useEffect(() => {
     console.log(`📍 Navegación: ${location.pathname}${location.search}`);
-    
+
     // En producción, aquí iría Google Analytics o similar
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // window.gtag('config', 'GA_MEASUREMENT_ID', { page_path: location.pathname });
     }
   }, [location]);
@@ -34,12 +43,12 @@ function RouteTracker() {
       setIsOnline(false);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -94,38 +103,42 @@ function ConnectionStatus() {
       setShowNotification(true);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
   if (!showNotification) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      padding: '12px 20px',
-      borderRadius: '8px',
-      fontWeight: '600',
-      fontSize: '0.9rem',
-      zIndex: 10000,
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      animation: 'slideIn 0.3s ease-out',
-      ...(isOnline ? {
-        backgroundColor: '#4CAF50',
-        color: 'white',
-      } : {
-        backgroundColor: '#F44336',
-        color: 'white',
-      })
-    }}>
-      {isOnline ? '✅ Conexión restaurada' : '🌐 Sin conexión a internet'}
+    <div
+      style={{
+        position: "fixed",
+        top: "20px",
+        right: "20px",
+        padding: "12px 20px",
+        borderRadius: "8px",
+        fontWeight: "600",
+        fontSize: "0.9rem",
+        zIndex: 10000,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        animation: "slideIn 0.3s ease-out",
+        ...(isOnline
+          ? {
+              backgroundColor: "#4CAF50",
+              color: "white",
+            }
+          : {
+              backgroundColor: "#F44336",
+              color: "white",
+            }),
+      }}
+    >
+      {isOnline ? "✅ Conexión restaurada" : "🌐 Sin conexión a internet"}
     </div>
   );
 }
@@ -146,11 +159,11 @@ class ErrorBoundary extends React.Component {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // En producción, enviar a servicio de logging
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // servicioLogging.logError(error, errorInfo);
     }
   }
@@ -158,53 +171,59 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '2rem',
-          textAlign: 'center',
-          fontFamily: 'Poppins, sans-serif',
-        }}>
-          <h1 style={{ color: '#C0392B', marginBottom: '1rem' }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "2rem",
+            textAlign: "center",
+            fontFamily: "Poppins, sans-serif",
+          }}
+        >
+          <h1 style={{ color: "#C0392B", marginBottom: "1rem" }}>
             ⚠️ Algo salió mal
           </h1>
-          <p style={{ color: '#666', marginBottom: '2rem' }}>
+          <p style={{ color: "#666", marginBottom: "2rem" }}>
             Ocurrió un error inesperado. Por favor, recargá la página.
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
-              backgroundColor: '#BCA88F',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontWeight: '600',
-              cursor: 'pointer',
+              backgroundColor: "#BCA88F",
+              color: "white",
+              border: "none",
+              padding: "12px 24px",
+              borderRadius: "8px",
+              fontWeight: "600",
+              cursor: "pointer",
             }}
           >
             🔄 Recargar página
           </button>
-          
-          {process.env.NODE_ENV === 'development' && (
-            <details style={{ 
-              marginTop: '2rem', 
-              textAlign: 'left',
-              maxWidth: '600px',
-              color: '#666',
-              fontSize: '0.9rem'
-            }}>
+
+          {process.env.NODE_ENV === "development" && (
+            <details
+              style={{
+                marginTop: "2rem",
+                textAlign: "left",
+                maxWidth: "600px",
+                color: "#666",
+                fontSize: "0.9rem",
+              }}
+            >
               <summary>Detalles del error (desarrollo)</summary>
-              <pre style={{ 
-                background: '#f5f5f5', 
-                padding: '1rem', 
-                borderRadius: '4px',
-                overflow: 'auto',
-                marginTop: '1rem'
-              }}>
+              <pre
+                style={{
+                  background: "#f5f5f5",
+                  padding: "1rem",
+                  borderRadius: "4px",
+                  overflow: "auto",
+                  marginTop: "1rem",
+                }}
+              >
                 {this.state.error?.toString()}
               </pre>
             </details>
@@ -224,9 +243,11 @@ export default function App() {
       <BrowserRouter>
         {/* 📊 Componente para tracking y monitoreo */}
         <RouteTracker />
-        
+
         <AppLayout>
           <Routes>
+            <Route path="/" element={<Landing />} />
+
             {/* Página principal - Formulario de subida */}
             <Route path="/" element={<UploadForm />} />
 
@@ -237,39 +258,45 @@ export default function App() {
             <Route path="/error" element={<ErrorPage />} />
 
             {/* Página de pending (opcional) */}
-            <Route path="/pending" element={
-              <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '2rem',
-                textAlign: 'center',
-                fontFamily: 'Poppins, sans-serif',
-              }}>
-                <h1 style={{ color: '#FF9800', marginBottom: '1rem' }}>
-                  ⏳ Pago en proceso
-                </h1>
-                <p style={{ color: '#666', marginBottom: '2rem' }}>
-                  Estamos procesando tu pago. Te notificaremos cuando se complete.
-                </p>
-                <button
-                  onClick={() => window.location.href = '/'}
+            <Route
+              path="/pending"
+              element={
+                <div
                   style={{
-                    backgroundColor: '#BCA88F',
-                    color: 'white',
-                    border: 'none',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
+                    minHeight: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "2rem",
+                    textAlign: "center",
+                    fontFamily: "Poppins, sans-serif",
                   }}
                 >
-                  🏠 Volver al inicio
-                </button>
-              </div>
-            } />
+                  <h1 style={{ color: "#FF9800", marginBottom: "1rem" }}>
+                    ⏳ Pago en proceso
+                  </h1>
+                  <p style={{ color: "#666", marginBottom: "2rem" }}>
+                    Estamos procesando tu pago. Te notificaremos cuando se
+                    complete.
+                  </p>
+                  <button
+                    onClick={() => (window.location.href = "/")}
+                    style={{
+                      backgroundColor: "#BCA88F",
+                      color: "white",
+                      border: "none",
+                      padding: "12px 24px",
+                      borderRadius: "8px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🏠 Volver al inicio
+                  </button>
+                </div>
+              }
+            />
 
             {/* Redirección para rutas no encontradas */}
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -319,6 +346,6 @@ html {
 `;
 
 // 🎨 Inyectar estilos adicionales
-const styleSheet = document.createElement('style');
+const styleSheet = document.createElement("style");
 styleSheet.innerText = additionalStyles;
 document.head.appendChild(styleSheet);
