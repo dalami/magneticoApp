@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import videoSrc from '/2.mp4';
+
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ const Hero = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Transforma tus momentos en <span className="text-yellow-300">imanes únicos</span>
           </h1>
-          <p className="text-xl mb-8 opacity-90">
+         <p className="text-xl mb-8 text-white/95 drop-shadow-sm">
             Crea imanes personalizados con tus fotos favoritas en simples pasos. Calidad premium y entrega rápida.
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
@@ -45,7 +47,7 @@ const Hero = () => {
         <div className="md:w-1/2 flex justify-center relative">
           <div className="relative w-full max-w-lg">
             <video className="w-full h-78 object-cover rounded-2xl shadow-2xl" autoPlay muted loop playsInline>
-              <source src="/img/2.mp4" type="video/mp4" />
+             <source src={videoSrc} type="video/mp4" />
               Tu navegador no soporta el elemento de video.
             </video>
           </div>

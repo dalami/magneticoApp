@@ -9,14 +9,14 @@ const Gallery = () => {
   };
 
   const galleryItems = [
-    { id: 1, title: 'Familia', bgColor: 'bg-purple-200' },
-    { id: 2, title: 'Mascotas', bgColor: 'bg-blue-200' },
-    { id: 3, title: 'Bodas', bgColor: 'bg-green-200' },
-    { id: 4, title: 'Viajes', bgColor: 'bg-yellow-200' },
-    { id: 5, title: 'Amigos', bgColor: 'bg-red-200' },
-    { id: 6, title: 'Eventos', bgColor: 'bg-indigo-200' },
-    { id: 7, title: 'Corporativo', bgColor: 'bg-pink-200' },
-    { id: 8, title: 'Vacaciones', bgColor: 'bg-teal-200' }
+    { id: 1, title: 'Familia', bgColor: 'bg-purple-200', image: '/familia.jpeg' },
+    { id: 2, title: 'Mascotas', bgColor: 'bg-blue-200', image: '/mascotas.jpeg' },
+    { id: 3, title: 'Bodas', bgColor: 'bg-green-200', image: '/boda.jpeg' },
+    { id: 4, title: 'Viajes', bgColor: 'bg-yellow-200', image: '/viajes.jpeg' },
+    { id: 5, title: 'Amigos', bgColor: 'bg-red-200', image: '/amigos.jpeg' },
+    { id: 6, title: 'Eventos', bgColor: 'bg-indigo-200', image: '/eventos.jpeg' },
+    { id: 7, title: 'Corporativo', bgColor: 'bg-pink-200', image: '/corporativo.jpeg' },
+    { id: 8, title: 'Vacaciones', bgColor: 'bg-teal-200', image: '/vacaciones.jpeg' }
   ];
 
   return (
@@ -33,8 +33,12 @@ const Gallery = () => {
               key={item.id} 
               className="rounded-xl overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105"
             >
-              <div className={`w-full h-64 ${item.bgColor} flex items-center justify-center relative group`}>
-                <span className="text-gray-700 text-lg font-medium">{item.title}</span>
+              <div className="w-full h-64 relative group">
+                <img 
+                  src={item.image} 
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span className="text-white font-medium text-lg">{item.title}</span>
                 </div>
