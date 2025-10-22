@@ -145,7 +145,7 @@ const Precios = () => {
         {/* Encabezado */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-800 mb-4">
-            Precios Claros y Sencillos
+            “Imanes premium, precios magnéticos 💫”
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Elige la cantidad que necesitas. Todos incluyen material premium,

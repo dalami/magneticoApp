@@ -30,14 +30,14 @@ export default function UploadForm() {
   // 🔥 FUNCIÓN PARA VOLVER - MOVIDA A LA DERECHA
   const handleVolver = () => {
     if (loading) return;
-    
+
     if (photos.length > 0) {
       const confirmar = window.confirm(
         "¿Estás seguro de que querés volver? Se perderán las fotos que subiste."
       );
       if (!confirmar) return;
     }
-    
+
     navigate(-1);
   };
 
@@ -45,7 +45,10 @@ export default function UploadForm() {
   useEffect(() => {
     if (location.state?.planSeleccionado) {
       setPlanSeleccionado(location.state.planSeleccionado);
-      setPrice(location.state.planSeleccionado.precio_total / location.state.planSeleccionado.cantidad);
+      setPrice(
+        location.state.planSeleccionado.precio_total /
+          location.state.planSeleccionado.cantidad
+      );
       setPriceLoading(false);
     } else {
       const fetchPrice = async () => {
@@ -58,7 +61,10 @@ export default function UploadForm() {
             setPrice(res.data.unit_price);
           }
         } catch (error) {
-          console.warn("⚠️ No se pudo cargar el precio, usando valor por defecto:", error.message);
+          console.warn(
+            "⚠️ No se pudo cargar el precio, usando valor por defecto:",
+            error.message
+          );
           setPrice(2000);
         } finally {
           setPriceLoading(false);
@@ -69,17 +75,13 @@ export default function UploadForm() {
   }, [location]);
 
   // Resto del código se mantiene igual...
-  const total = planSeleccionado 
+  const total = planSeleccionado
     ? planSeleccionado.precio_total
     : photos.length * price;
 
-  const maxFotos = planSeleccionado 
-    ? planSeleccionado.cantidad
-    : 20;
+  const maxFotos = planSeleccionado ? planSeleccionado.cantidad : 20;
 
-  const minFotos = planSeleccionado 
-    ? planSeleccionado.cantidad
-    : 4;
+  const minFotos = planSeleccionado ? planSeleccionado.cantidad : 4;
 
   const compressImage = useCallback((file, maxWidth = 1200, quality = 0.8) => {
     return new Promise((resolve) => {
@@ -89,22 +91,22 @@ export default function UploadForm() {
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           let width = img.width;
           let height = img.height;
-          
+
           if (width > maxWidth) {
             height = (height * maxWidth) / width;
             width = maxWidth;
           }
-          
+
           canvas.width = width;
           canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
+
+          const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob(resolve, 'image/jpeg', quality);
+
+          canvas.toBlob(resolve, "image/jpeg", quality);
         };
       };
     });
@@ -112,14 +114,20 @@ export default function UploadForm() {
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
-    
+
     if (photos.length + files.length > maxFotos) {
-      setError(`Máximo ${maxFotos} fotos permitidas en el plan ${planSeleccionado?.plan || ''}`);
+      setError(
+        `Máximo ${maxFotos} fotos permitidas en el plan ${
+          planSeleccionado?.plan || ""
+        }`
+      );
       return;
     }
 
-    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
-    
+    const invalidFiles = files.filter(
+      (file) => !file.type.startsWith("image/")
+    );
+
     if (invalidFiles.length > 0) {
       setError("Solo se permiten archivos de imagen");
       return;
@@ -129,28 +137,29 @@ export default function UploadForm() {
       setError("");
       setSuccess("");
       setShowManualRedirect(false);
-      
+
       setSuccess("⏳ Comprimiendo imágenes...");
-      
+
       const compressedPhotos = [];
       for (const file of files) {
         const compressedBlob = await compressImage(file);
         const compressedFile = new File([compressedBlob], file.name, {
-          type: 'image/jpeg',
-          lastModified: new Date().getTime()
+          type: "image/jpeg",
+          lastModified: new Date().getTime(),
         });
         compressedPhotos.push(compressedFile);
       }
-      
-      setPhotos(prev => [...prev, ...compressedPhotos]);
-      setSuccess(`✅ ${compressedPhotos.length} imagen(es) comprimida(s) y lista(s)`);
-      
+
+      setPhotos((prev) => [...prev, ...compressedPhotos]);
+      setSuccess(
+        `✅ ${compressedPhotos.length} imagen(es) comprimida(s) y lista(s)`
+      );
+
       setTimeout(() => setSuccess(""), 3000);
-      
     } catch (error) {
       console.error("Error comprimiendo imágenes:", error);
       setError("Error al procesar las imágenes");
-      setPhotos(prev => [...prev, ...files]);
+      setPhotos((prev) => [...prev, ...files]);
     }
   };
 
@@ -160,60 +169,65 @@ export default function UploadForm() {
   };
 
   const rotatePhoto = (index, degrees = 90) => {
-    setPhotos(prev => prev.map((file, i) => {
-      if (i === index) {
-        const rotatedFile = new File([file], file.name, { 
-          type: file.type,
-          lastModified: new Date().getTime()
-        });
-        rotatedFile._rotation = ((file._rotation || 0) + degrees) % 360;
-        return rotatedFile;
-      }
-      return file;
-    }));
+    setPhotos((prev) =>
+      prev.map((file, i) => {
+        if (i === index) {
+          const rotatedFile = new File([file], file.name, {
+            type: file.type,
+            lastModified: new Date().getTime(),
+          });
+          rotatedFile._rotation = ((file._rotation || 0) + degrees) % 360;
+          return rotatedFile;
+        }
+        return file;
+      })
+    );
   };
 
-  const getCroppedImg = useCallback(async (imageSrc, cropAreaPixels, rotation = 0) => {
-    return new Promise((resolve) => {
-      const image = new Image();
-      image.src = imageSrc;
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        
-        const radians = (rotation * Math.PI) / 180;
-        const sin = Math.abs(Math.sin(radians));
-        const cos = Math.abs(Math.cos(radians));
-        
-        const width = cropAreaPixels.width;
-        const height = cropAreaPixels.height;
-        
-        const newWidth = width * cos + height * sin;
-        const newHeight = width * sin + height * cos;
-        
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-        
-        ctx.translate(newWidth / 2, newHeight / 2);
-        ctx.rotate(radians);
-        ctx.translate(-width / 2, -height / 2);
-        
-        ctx.drawImage(
-          image,
-          cropAreaPixels.x,
-          cropAreaPixels.y,
-          cropAreaPixels.width,
-          cropAreaPixels.height,
-          0,
-          0,
-          width,
-          height
-        );
-        
-        canvas.toBlob(resolve, "image/jpeg", 0.9);
-      };
-    });
-  }, []);
+  const getCroppedImg = useCallback(
+    async (imageSrc, cropAreaPixels, rotation = 0) => {
+      return new Promise((resolve) => {
+        const image = new Image();
+        image.src = imageSrc;
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          const radians = (rotation * Math.PI) / 180;
+          const sin = Math.abs(Math.sin(radians));
+          const cos = Math.abs(Math.cos(radians));
+
+          const width = cropAreaPixels.width;
+          const height = cropAreaPixels.height;
+
+          const newWidth = width * cos + height * sin;
+          const newHeight = width * sin + height * cos;
+
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+
+          ctx.translate(newWidth / 2, newHeight / 2);
+          ctx.rotate(radians);
+          ctx.translate(-width / 2, -height / 2);
+
+          ctx.drawImage(
+            image,
+            cropAreaPixels.x,
+            cropAreaPixels.y,
+            cropAreaPixels.width,
+            cropAreaPixels.height,
+            0,
+            0,
+            width,
+            height
+          );
+
+          canvas.toBlob(resolve, "image/jpeg", 0.9);
+        };
+      });
+    },
+    []
+  );
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels);
@@ -221,19 +235,19 @@ export default function UploadForm() {
 
   const saveCrop = async () => {
     if (cropIndex === null || !croppedAreaPixels) return;
-    
+
     try {
       const file = photos[cropIndex];
       const imageUrl = URL.createObjectURL(file);
       const blob = await getCroppedImg(imageUrl, croppedAreaPixels, rotation);
-      
-      const croppedFile = new File([blob], file.name, { 
+
+      const croppedFile = new File([blob], file.name, {
         type: "image/jpeg",
-        lastModified: new Date().getTime()
+        lastModified: new Date().getTime(),
       });
-      
+
       croppedFile._rotation = (file._rotation || 0) + rotation;
-      
+
       setPhotos((prev) =>
         prev.map((f, i) => (i === cropIndex ? croppedFile : f))
       );
@@ -241,7 +255,7 @@ export default function UploadForm() {
       setCrop({ x: 0, y: 0 });
       setZoom(1);
       setRotation(0);
-      
+
       URL.revokeObjectURL(imageUrl);
     } catch (error) {
       console.error("Error al recortar imagen:", error);
@@ -250,7 +264,7 @@ export default function UploadForm() {
   };
 
   const rotateInModal = (degrees = 90) => {
-    setRotation(prev => {
+    setRotation((prev) => {
       const newRotation = (prev + degrees) % 360;
       return newRotation < 0 ? newRotation + 360 : newRotation;
     });
@@ -274,12 +288,16 @@ export default function UploadForm() {
 
     if (planSeleccionado) {
       if (photos.length !== planSeleccionado.cantidad) {
-        setError(`El plan ${planSeleccionado.plan} incluye ${planSeleccionado.cantidad} fotoimanes. Subiste ${photos.length} fotos.`);
+        setError(
+          `El plan ${planSeleccionado.plan} incluye ${planSeleccionado.cantidad} fotoimanes. Subiste ${photos.length} fotos.`
+        );
         return;
       }
     } else {
       if (photos.length < minFotos) {
-        setError(`Debes subir al menos ${minFotos} fotos para realizar el pedido`);
+        setError(
+          `Debes subir al menos ${minFotos} fotos para realizar el pedido`
+        );
         return;
       }
     }
@@ -289,7 +307,7 @@ export default function UploadForm() {
     formData.append("email", email.trim());
     formData.append("phone", phone.trim());
     formData.append("address", address.trim());
-    
+
     photos.forEach((photo, index) => {
       const fileName = `foto_${index + 1}_${Date.now()}.jpg`;
       formData.append("photos", photo, fileName);
@@ -310,11 +328,14 @@ export default function UploadForm() {
       setLoading(true);
       setError("");
       setSuccess("⏳ Procesando tu pedido...");
-      
-      console.log("🚀 Enviando pedido:", planSeleccionado ? `Plan ${planSeleccionado.plan}` : "Sistema unitario");
+
+      console.log(
+        "🚀 Enviando pedido:",
+        planSeleccionado ? `Plan ${planSeleccionado.plan}` : "Sistema unitario"
+      );
 
       const res = await api.post("/send-photos", formData, {
-        headers: { 
+        headers: {
           "Content-Type": "multipart/form-data",
         },
         timeout: 60000,
@@ -325,7 +346,7 @@ export default function UploadForm() {
       if (res.data?.payment?.init_point) {
         const mercadoPagoUrl = res.data.payment.init_point;
         setMpUrl(mercadoPagoUrl);
-        
+
         console.log("🎯 Redirigiendo a Mercado Pago:", mercadoPagoUrl);
         setSuccess("✅ ¡Pedido exitoso! Redirigiendo a Mercado Pago...");
 
@@ -335,23 +356,25 @@ export default function UploadForm() {
 
         setTimeout(() => {
           setShowManualRedirect(true);
-          setSuccess("✅ ¡Pedido exitoso! Si no te redirige automáticamente, hacé clic en el botón 'IR A MERCADO PAGO'");
+          setSuccess(
+            "✅ ¡Pedido exitoso! Si no te redirige automáticamente, hacé clic en el botón 'IR A MERCADO PAGO'"
+          );
         }, 3000);
-
       } else {
         setError("No se recibió link de pago del servidor");
         setLoading(false);
       }
-
     } catch (err) {
       console.error("❌ Error completo:", err);
-      
+
       if (err.response?.data?.error) {
         setError(`❌ ${err.response.data.error}`);
-      } else if (err.code === 'ECONNABORTED') {
+      } else if (err.code === "ECONNABORTED") {
         setError("⏰ El servidor está tardando demasiado. Intentá nuevamente.");
       } else if (err.response?.status === 413) {
-        setError("📸 Las fotos son demasiado grandes. Reducí el tamaño e intentá nuevamente.");
+        setError(
+          "📸 Las fotos son demasiado grandes. Reducí el tamaño e intentá nuevamente."
+        );
       } else if (err.response?.status === 429) {
         setError("🚫 Demasiados intentos. Esperá unos minutos.");
       } else if (!navigator.onLine) {
@@ -371,7 +394,7 @@ export default function UploadForm() {
 
   useEffect(() => {
     return () => {
-      photos.forEach(photo => {
+      photos.forEach((photo) => {
         if (photo instanceof File) {
           URL.revokeObjectURL(URL.createObjectURL(photo));
         }
@@ -430,8 +453,15 @@ export default function UploadForm() {
           }
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         Volver
       </button>
@@ -450,28 +480,39 @@ export default function UploadForm() {
       <h2 style={{ fontWeight: 600, color: "#3B2F2F" }}>
         Magnético Fotoimanes
       </h2>
-      
+
       {/* Mostrar información del plan */}
       {planSeleccionado && (
-        <div style={{
-          background: "#E8F5E9",
-          border: "2px solid #4CAF50",
-          borderRadius: "10px",
-          padding: "15px",
-          marginBottom: "20px",
-          textAlign: "left"
-        }}>
-          <h3 style={{ margin: "0 0 10px 0", color: "#2E7D32", fontSize: "1.1rem" }}>
+        <div
+          style={{
+            background: "#E8F5E9",
+            border: "2px solid #4CAF50",
+            borderRadius: "10px",
+            padding: "15px",
+            marginBottom: "20px",
+            textAlign: "left",
+          }}
+        >
+          <h3
+            style={{
+              margin: "0 0 10px 0",
+              color: "#2E7D32",
+              fontSize: "1.1rem",
+            }}
+          >
             📦 Plan {planSeleccionado.plan}
           </h3>
           <p style={{ margin: "5px 0", fontSize: "0.9rem" }}>
             <strong>Cantidad:</strong> {planSeleccionado.cantidad} fotoimanes
           </p>
           <p style={{ margin: "5px 0", fontSize: "0.9rem" }}>
-            <strong>Precio total:</strong> {fmtARS(planSeleccionado.precio_total)}
+            <strong>Precio total:</strong>{" "}
+            {fmtARS(planSeleccionado.precio_total)}
           </p>
           {planSeleccionado.descuento > 0 && (
-            <p style={{ margin: "5px 0", fontSize: "0.9rem", color: "#4CAF50" }}>
+            <p
+              style={{ margin: "5px 0", fontSize: "0.9rem", color: "#4CAF50" }}
+            >
               <strong>Descuento:</strong> {planSeleccionado.descuento}% OFF
             </p>
           )}
@@ -479,18 +520,24 @@ export default function UploadForm() {
       )}
 
       <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: 20 }}>
-        {planSeleccionado 
+        {planSeleccionado
           ? `Subí exactamente ${planSeleccionado.cantidad} fotos para tu plan ${planSeleccionado.plan} ✨`
-          : "Subí tus fotos, recortalas y completá tus datos para el envío ✨"
-        }
+          : "Subí tus fotos, recortalas y completá tus datos para el envío ✨"}
       </p>
 
       {/* SECCIÓN DE DATOS PERSONALES */}
       <div style={{ marginBottom: "15px" }}>
-        <h3 style={{ fontSize: "1.1rem", color: "#3B2F2F", marginBottom: "15px", textAlign: "left" }}>
+        <h3
+          style={{
+            fontSize: "1.1rem",
+            color: "#3B2F2F",
+            marginBottom: "15px",
+            textAlign: "left",
+          }}
+        >
           📋 Tus datos
         </h3>
-        
+
         <input
           type="text"
           placeholder="Tu nombre completo *"
@@ -522,7 +569,7 @@ export default function UploadForm() {
           placeholder="Tu dirección para el envío(Direccion,Localidad,provincia,CP)"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          style={{...inputStyle, minHeight: "80px", resize: "vertical"}}
+          style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }}
           disabled={loading}
           rows={3}
         />
@@ -530,10 +577,17 @@ export default function UploadForm() {
 
       {/* SECCIÓN DE FOTOS */}
       <div style={{ marginBottom: "15px" }}>
-        <h3 style={{ fontSize: "1.1rem", color: "#3B2F2F", marginBottom: "15px", textAlign: "left" }}>
+        <h3
+          style={{
+            fontSize: "1.1rem",
+            color: "#3B2F2F",
+            marginBottom: "15px",
+            textAlign: "left",
+          }}
+        >
           📸 Tus fotos
         </h3>
-      
+
         <div style={{ position: "relative", marginBottom: "10px" }}>
           <input
             type="file"
@@ -543,26 +597,40 @@ export default function UploadForm() {
             style={{
               ...inputStyle,
               opacity: loading ? 0.6 : 1,
-              cursor: loading ? "not-allowed" : "pointer"
+              cursor: loading ? "not-allowed" : "pointer",
             }}
             disabled={loading || photos.length >= maxFotos}
           />
-          <small style={{ 
-            position: "absolute", 
-            right: "10px", 
-            top: "50%", 
-            transform: "translateY(-50%)",
-            color: "#666",
-            fontSize: "0.8rem"
-          }}>
+          <small
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#666",
+              fontSize: "0.8rem",
+            }}
+          >
             {photos.length}/{maxFotos}
+          </small>
+        </div>
+        <div style={{ textAlign: "left", marginBottom: "10px" }}>
+          <small
+            style={{
+              color: "#666",
+              fontSize: "0.75rem",
+              fontStyle: "italic",
+            }}
+          >
+            ⚠️ Mínimo {minFotos} fotos
           </small>
         </div>
 
         {photos.length > 0 && (
           <div style={{ marginBottom: 15 }}>
             <p style={{ fontWeight: 500, marginBottom: "10px" }}>
-              Previsualización ({photos.length} foto{photos.length > 1 ? 's' : ''})
+              Previsualización ({photos.length} foto
+              {photos.length > 1 ? "s" : ""})
             </p>
             <div
               style={{
@@ -587,7 +655,7 @@ export default function UploadForm() {
                       border: "2px solid #ccc",
                       cursor: "pointer",
                       transform: `rotate(${p._rotation || 0}deg)`,
-                      transition: "transform 0.3s ease"
+                      transition: "transform 0.3s ease",
                     }}
                     onClick={() => {
                       if (!loading) {
@@ -611,7 +679,7 @@ export default function UploadForm() {
                       color: "#C0392B",
                       fontWeight: 700,
                       opacity: loading ? 0.5 : 1,
-                      zIndex: 2
+                      zIndex: 2,
                     }}
                     title="Eliminar foto"
                     disabled={loading}
@@ -640,7 +708,7 @@ export default function UploadForm() {
                       fontSize: "12px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center"
+                      justifyContent: "center",
                     }}
                     title="Girar 90°"
                     disabled={loading}
@@ -659,39 +727,36 @@ export default function UploadForm() {
         <div style={summaryStyle}>
           {planSeleccionado ? (
             <>
-              <strong>Plan {planSeleccionado.plan}:</strong> {photos.length}/{planSeleccionado.cantidad} fotos
+              <strong>Plan {planSeleccionado.plan}:</strong> {photos.length}/
+              {planSeleccionado.cantidad} fotos
               <br />
               <strong>Total: {fmtARS(total)}</strong>
               {planSeleccionado.descuento > 0 && (
-                <div style={{ fontSize: "0.8rem", color: "#4CAF50", marginTop: "5px" }}>
+                <div
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "#4CAF50",
+                    marginTop: "5px",
+                  }}
+                >
                   Incluye {planSeleccionado.descuento}% de descuento
                 </div>
               )}
             </>
+          ) : priceLoading ? (
+            "Cargando precio..."
           ) : (
-            priceLoading ? (
-              "Cargando precio..."
-            ) : (
-              <>
-                {photos.length} foto{photos.length > 1 ? "s" : ""} × {fmtARS(price)} ={" "}
-                <strong>{fmtARS(total)}</strong>
-              </>
-            )
+            <>
+              {photos.length} foto{photos.length > 1 ? "s" : ""} ×{" "}
+              {fmtARS(price)} = <strong>{fmtARS(total)}</strong>
+            </>
           )}
         </div>
       )}
 
-      {error && (
-        <div style={msgStyle("#FCE4E4", "#C0392B")}>
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div style={msgStyle("#E8F5E9", "#2E7D32")}>
-          {success}
-        </div>
-      )}
+      {error && <div style={msgStyle("#FCE4E4", "#C0392B")}>{error}</div>}
+
+      {success && <div style={msgStyle("#E8F5E9", "#2E7D32")}>{success}</div>}
 
       {showManualRedirect && mpUrl && (
         <button
@@ -725,79 +790,113 @@ export default function UploadForm() {
 
       <button
         onClick={handleSendPhotos}
-        disabled={loading || photos.length < minFotos || (planSeleccionado && photos.length !== planSeleccionado.cantidad)}
+        disabled={
+          loading ||
+          photos.length < minFotos ||
+          (planSeleccionado && photos.length !== planSeleccionado.cantidad)
+        }
         style={{
           width: "100%",
-          background: (loading || photos.length < minFotos || (planSeleccionado && photos.length !== planSeleccionado.cantidad)) ? "#ccc" : "#BCA88F",
+          background:
+            loading ||
+            photos.length < minFotos ||
+            (planSeleccionado && photos.length !== planSeleccionado.cantidad)
+              ? "#ccc"
+              : "#BCA88F",
           color: "#fff",
           border: "none",
           padding: "14px",
           borderRadius: "10px",
           fontWeight: "600",
           fontSize: "1rem",
-          cursor: (loading || photos.length < minFotos || (planSeleccionado && photos.length !== planSeleccionado.cantidad)) ? "not-allowed" : "pointer",
+          cursor:
+            loading ||
+            photos.length < minFotos ||
+            (planSeleccionado && photos.length !== planSeleccionado.cantidad)
+              ? "not-allowed"
+              : "pointer",
           transition: "background 0.3s ease",
         }}
         onMouseEnter={(e) => {
-          if (!loading && photos.length >= minFotos && (!planSeleccionado || photos.length === planSeleccionado.cantidad)) {
+          if (
+            !loading &&
+            photos.length >= minFotos &&
+            (!planSeleccionado || photos.length === planSeleccionado.cantidad)
+          ) {
             e.target.style.background = "#A8927A";
           }
         }}
         onMouseLeave={(e) => {
-          if (!loading && photos.length >= minFotos && (!planSeleccionado || photos.length === planSeleccionado.cantidad)) {
+          if (
+            !loading &&
+            photos.length >= minFotos &&
+            (!planSeleccionado || photos.length === planSeleccionado.cantidad)
+          ) {
             e.target.style.background = "#BCA88F";
           }
         }}
       >
-        {loading ? (
-          "⏳ Procesando..."
-        ) : planSeleccionado ? (
-          `📤 Enviar ${photos.length}/${planSeleccionado.cantidad} Fotos y Pagar ${fmtARS(total)}`
-        ) : (
-          `📤 Enviar ${photos.length} Foto${photos.length > 1 ? 's' : ''} y Pagar ${fmtARS(total)}`
-        )}
+        {loading
+          ? "⏳ Procesando..."
+          : planSeleccionado
+          ? `📤 Enviar ${photos.length}/${
+              planSeleccionado.cantidad
+            } Fotos y Pagar ${fmtARS(total)}`
+          : `📤 Enviar ${photos.length} Foto${
+              photos.length > 1 ? "s" : ""
+            } y Pagar ${fmtARS(total)}`}
       </button>
 
       {/* Modal de recorte */}
       {cropIndex !== null && (
         <div style={modalOverlay}>
           <div style={modalContent}>
-            <div style={{ 
-              position: "relative", 
-              width: "100%", 
-              height: "100%",
-              display: "flex",
-              flexDirection: "column"
-            }}>
-              <div style={{
-                padding: "10px",
-                background: "#2a2a2a",
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                height: "100%",
                 display: "flex",
-                justifyContent: "center",
-                gap: "10px",
-                alignItems: "center",
-                flexWrap: "wrap"
-              }}>
-                <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>
+                flexDirection: "column",
+              }}
+            >
+              <div
+                style={{
+                  padding: "10px",
+                  background: "#2a2a2a",
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "10px",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  style={{
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                  }}
+                >
                   Rotación: {rotation}°
                 </span>
-                <button 
+                <button
                   onClick={() => rotateInModal(-90)}
                   style={rotateButtonStyle}
                   title="Girar 90° a la izquierda"
                 >
                   ↶ 90°
                 </button>
-                <button 
+                <button
                   onClick={() => rotateInModal(90)}
                   style={rotateButtonStyle}
                   title="Girar 90° a la derecha"
                 >
                   ↷ 90°
                 </button>
-                <button 
+                <button
                   onClick={() => setRotation(0)}
-                  style={{...rotateButtonStyle, background: "#666"}}
+                  style={{ ...rotateButtonStyle, background: "#666" }}
                   title="Resetear rotación"
                 >
                   ⟲ 0°
@@ -820,14 +919,14 @@ export default function UploadForm() {
                       width: "100%",
                       height: "100%",
                       backgroundColor: "#000",
-                    }
+                    },
                   }}
                 />
               </div>
             </div>
             <div style={modalButtons}>
-              <button 
-                style={btnCancel} 
+              <button
+                style={btnCancel}
                 onClick={() => {
                   setCropIndex(null);
                   setRotation(0);
@@ -836,11 +935,7 @@ export default function UploadForm() {
               >
                 Cancelar
               </button>
-              <button 
-                style={btnSave} 
-                onClick={saveCrop}
-                disabled={loading}
-              >
+              <button style={btnSave} onClick={saveCrop} disabled={loading}>
                 Guardar Recorte
               </button>
             </div>
@@ -944,5 +1039,5 @@ const rotateButtonStyle = {
   cursor: "pointer",
   fontSize: "14px",
   fontWeight: "bold",
-  minWidth: "70px"
+  minWidth: "70px",
 };
