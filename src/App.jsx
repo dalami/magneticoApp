@@ -6,12 +6,14 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate  // ✅ Añadir useNavigate aquí
 } from "react-router-dom";
 
 import Landing from "./pages/Landing.jsx"
 import UploadForm from "./components/UploadForm.jsx";
 import SuccessPage from "./pages/SuccessPage.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
+import Precios from "./pages/Precios.jsx"
 import { ApiUtils } from "./Lib/api.js";
 import "./style.css";
 import "./App.css"
@@ -24,11 +26,6 @@ function RouteTracker() {
   // 📊 Tracking de página (simplificado para desarrollo)
   useEffect(() => {
     console.log(`📍 Navegación: ${location.pathname}${location.search}`);
-
-    // En producción, aquí iría Google Analytics o similar
-    if (process.env.NODE_ENV === "production") {
-      // window.gtag('config', 'GA_MEASUREMENT_ID', { page_path: location.pathname });
-    }
   }, [location]);
 
   // 🌐 Monitoreo de conexión
@@ -50,26 +47,6 @@ function RouteTracker() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []);
-
-  // 🩺 Health check del servidor al cargar la app
-  useEffect(() => {
-    const checkServerHealth = async () => {
-      try {
-        const health = await ApiUtils.healthCheck();
-        if (!health.healthy) {
-          console.warn("⚠️ Servidor no responde correctamente");
-        } else {
-          console.log("✅ Servidor funcionando correctamente");
-        }
-      } catch (error) {
-        console.error("❌ Error en health check:", error);
-      }
-    };
-
-    // Esperar un poco antes del health check
-    const timer = setTimeout(checkServerHealth, 1000);
-    return () => clearTimeout(timer);
   }, []);
 
   return null;
@@ -143,6 +120,33 @@ function ConnectionStatus() {
   );
 }
 
+// 🚀 Componente wrapper para Landing con navegación - CORREGIDO
+function LandingWithNavigation() {
+  const navigate = useNavigate(); // ✅ Ahora está dentro del Router
+
+  // Función para manejar el clic en "Crear Mis Fotoimanes"
+  const handleCtaClick = (e) => {
+    e.preventDefault();
+    navigate('/crear-fotoimanes');
+  };
+
+  // Función para scroll suave
+  const handleSmoothScroll = (e, targetId) => {
+    e.preventDefault();
+    const element = document.querySelector(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <Landing 
+      onCtaClick={handleCtaClick} 
+      onSmoothScroll={handleSmoothScroll} 
+    />
+  );
+}
+
 // 🎯 Error Boundary para capturar errores globales
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -161,11 +165,6 @@ class ErrorBoundary extends React.Component {
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
     });
-
-    // En producción, enviar a servicio de logging
-    if (process.env.NODE_ENV === "production") {
-      // servicioLogging.logError(error, errorInfo);
-    }
   }
 
   render() {
@@ -203,67 +202,12 @@ class ErrorBoundary extends React.Component {
           >
             🔄 Recargar página
           </button>
-
-          {process.env.NODE_ENV === "development" && (
-            <details
-              style={{
-                marginTop: "2rem",
-                textAlign: "left",
-                maxWidth: "600px",
-                color: "#666",
-                fontSize: "0.9rem",
-              }}
-            >
-              <summary>Detalles del error (desarrollo)</summary>
-              <pre
-                style={{
-                  background: "#f5f5f5",
-                  padding: "1rem",
-                  borderRadius: "4px",
-                  overflow: "auto",
-                  marginTop: "1rem",
-                }}
-              >
-                {this.state.error?.toString()}
-              </pre>
-            </details>
-          )}
         </div>
       );
     }
 
     return this.props.children;
   }
-}
-
-// 🚀 Componente wrapper para Landing con navegación
-function LandingWithNavigation() {
-  const handleCtaClick = (e) => {
-    e.preventDefault();
-    
-    // Crear URL absoluta
-    const currentUrl = new URL(window.location.href);
-    const uploadUrl = `${currentUrl.origin}/crear-fotoimanes`;
-    
-    // Forzar apertura en nueva pestaña
-    window.open(uploadUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  // Función para scroll suave
-  const handleSmoothScroll = (e, targetId) => {
-    e.preventDefault();
-    const element = document.querySelector(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  return (
-    <Landing 
-      onCtaClick={handleCtaClick} 
-      onSmoothScroll={handleSmoothScroll} 
-    />
-  );
 }
 
 // 🚀 Componente principal de la aplicación
@@ -287,6 +231,9 @@ export default function App() {
 
             {/* Página de error o cancelación */}
             <Route path="/error" element={<ErrorPage />} />
+
+            {/* ✅ Página de Precios */}
+            <Route path="/precios" element={<Precios />} />
 
             {/* Página de pending (opcional) */}
             <Route

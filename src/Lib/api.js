@@ -195,21 +195,25 @@ export const ApiUtils = {
   },
   
   // Verificar configuración de precios
-  async checkPricing() {
-    try {
-      const response = await api.get("/config/price");
-      return {
-        available: true,
-        price: response.data.price || response.data.unit_price,
-        currency: response.data.currency_id
-      };
-    } catch (error) {
-      return {
-        available: false,
-        error: error.message
-      };
-    }
-  },
+ async checkPricing() {
+  try {
+    const response = await api.get("/config/price");
+    console.log('💰 Respuesta completa de precio:', response.data); // ← Agregar log
+    
+    return {
+      available: true,
+      price: response.data.unit_price, // ← Cambiar esto
+      currency: response.data.currency_id,
+      rawData: response.data // ← Para debug
+    };
+  } catch (error) {
+    console.error('❌ Error obteniendo precio:', error);
+    return {
+      available: false,
+      error: error.message
+    };
+  }
+},
   
   // Cancelar requests pendientes
   createCancelToken() {

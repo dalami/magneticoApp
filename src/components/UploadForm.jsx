@@ -3,10 +3,12 @@ import Cropper from "react-easy-crop";
 import { api } from "../Lib/api.js";
 import { fmtARS } from "../Lib/currency.js";
 import logo from "/magnetocp.jpg";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function UploadForm() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,40 +23,64 @@ export default function UploadForm() {
   const [success, setSuccess] = useState("");
   const [price, setPrice] = useState(2000);
   const [priceLoading, setPriceLoading] = useState(true);
-  
   const [mpUrl, setMpUrl] = useState("");
   const [showManualRedirect, setShowManualRedirect] = useState(false);
   const [rotation, setRotation] = useState(0);
 
-  // 🔥 FUNCIÓN PARA VOLVER AL INICIO
-  const handleGoBack = () => {
-    navigate('/');
+  // 🔥 FUNCIÓN PARA VOLVER - MOVIDA A LA DERECHA
+  const handleVolver = () => {
+    if (loading) return;
+    
+    if (photos.length > 0) {
+      const confirmar = window.confirm(
+        "¿Estás seguro de que querés volver? Se perderán las fotos que subiste."
+      );
+      if (!confirmar) return;
+    }
+    
+    navigate(-1);
   };
 
+  // Obtener plan seleccionado desde la navegación
   useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        setPriceLoading(true);
-        const res = await api.get("/config/price");
-        if (res.data?.price) {
-          setPrice(res.data.price);
-        } else if (res.data?.unit_price) {
-          setPrice(res.data.unit_price);
+    if (location.state?.planSeleccionado) {
+      setPlanSeleccionado(location.state.planSeleccionado);
+      setPrice(location.state.planSeleccionado.precio_total / location.state.planSeleccionado.cantidad);
+      setPriceLoading(false);
+    } else {
+      const fetchPrice = async () => {
+        try {
+          setPriceLoading(true);
+          const res = await api.get("/config/price");
+          if (res.data?.price) {
+            setPrice(res.data.price);
+          } else if (res.data?.unit_price) {
+            setPrice(res.data.unit_price);
+          }
+        } catch (error) {
+          console.warn("⚠️ No se pudo cargar el precio, usando valor por defecto:", error.message);
+          setPrice(2000);
+        } finally {
+          setPriceLoading(false);
         }
-      } catch (error) {
-        console.warn("⚠️ No se pudo cargar el precio, usando valor por defecto:", error.message);
-        setPrice(2000);
-      } finally {
-        setPriceLoading(false);
-      }
-    };
-    
-    fetchPrice();
-  }, []);
+      };
+      fetchPrice();
+    }
+  }, [location]);
 
-  const total = photos.length * price;
+  // Resto del código se mantiene igual...
+  const total = planSeleccionado 
+    ? planSeleccionado.precio_total
+    : photos.length * price;
 
-  // 🔥 FUNCIÓN: Comprimir imagen
+  const maxFotos = planSeleccionado 
+    ? planSeleccionado.cantidad
+    : 20;
+
+  const minFotos = planSeleccionado 
+    ? planSeleccionado.cantidad
+    : 4;
+
   const compressImage = useCallback((file, maxWidth = 1200, quality = 0.8) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -87,8 +113,8 @@ export default function UploadForm() {
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     
-    if (photos.length + files.length > 20) {
-      setError("Máximo 20 fotos permitidas");
+    if (photos.length + files.length > maxFotos) {
+      setError(`Máximo ${maxFotos} fotos permitidas en el plan ${planSeleccionado?.plan || ''}`);
       return;
     }
 
@@ -230,7 +256,6 @@ export default function UploadForm() {
     });
   };
 
-  // 🔥 FUNCIÓN PRINCIPAL ACTUALIZADA - REDIRECCIÓN INMEDIATA A MERCADO PAGO
   const handleSendPhotos = async () => {
     setError("");
     setSuccess("");
@@ -247,9 +272,16 @@ export default function UploadForm() {
       return;
     }
 
-    if (photos.length < 4) {
-      setError("Debes subir al menos 4 fotos para realizar el pedido");
-      return;
+    if (planSeleccionado) {
+      if (photos.length !== planSeleccionado.cantidad) {
+        setError(`El plan ${planSeleccionado.plan} incluye ${planSeleccionado.cantidad} fotoimanes. Subiste ${photos.length} fotos.`);
+        return;
+      }
+    } else {
+      if (photos.length < minFotos) {
+        setError(`Debes subir al menos ${minFotos} fotos para realizar el pedido`);
+        return;
+      }
     }
 
     const formData = new FormData();
@@ -263,14 +295,24 @@ export default function UploadForm() {
       formData.append("photos", photo, fileName);
     });
 
+    if (planSeleccionado) {
+      formData.append("plan", planSeleccionado.plan);
+      formData.append("cantidad", planSeleccionado.cantidad);
+      formData.append("precio_total", planSeleccionado.precio_total);
+      formData.append("precio_original", planSeleccionado.precio_original);
+      formData.append("descuento", planSeleccionado.descuento || 0);
+      formData.append("tipo", "fotoimanes_plan");
+    } else {
+      formData.append("tipo", "fotoimanes_unitario");
+    }
+
     try {
       setLoading(true);
       setError("");
       setSuccess("⏳ Procesando tu pedido...");
       
-      console.log("🚀 Enviando pedido con imágenes comprimidas...");
+      console.log("🚀 Enviando pedido:", planSeleccionado ? `Plan ${planSeleccionado.plan}` : "Sistema unitario");
 
-      // 🔥 TIMEOUT AUMENTADO A 60 SEGUNDOS
       const res = await api.post("/send-photos", formData, {
         headers: { 
           "Content-Type": "multipart/form-data",
@@ -280,7 +322,6 @@ export default function UploadForm() {
 
       console.log("✅ Respuesta del servidor:", res.data);
 
-      // 🔥 REDIRECCIÓN INMEDIATA A MERCADO PAGO
       if (res.data?.payment?.init_point) {
         const mercadoPagoUrl = res.data.payment.init_point;
         setMpUrl(mercadoPagoUrl);
@@ -288,12 +329,10 @@ export default function UploadForm() {
         console.log("🎯 Redirigiendo a Mercado Pago:", mercadoPagoUrl);
         setSuccess("✅ ¡Pedido exitoso! Redirigiendo a Mercado Pago...");
 
-        // Redirección inmediata
         setTimeout(() => {
           window.location.href = mercadoPagoUrl;
         }, 500);
 
-        // Fallback después de 3 segundos
         setTimeout(() => {
           setShowManualRedirect(true);
           setSuccess("✅ ¡Pedido exitoso! Si no te redirige automáticamente, hacé clic en el botón 'IR A MERCADO PAGO'");
@@ -352,41 +391,46 @@ export default function UploadForm() {
         margin: "2rem auto",
         textAlign: "center",
         fontFamily: "Poppins, sans-serif",
-        position: "relative"
+        position: "relative",
       }}
     >
-      {/* 🔥 BOTÓN VOLVER - ESQUINA SUPERIOR IZQUIERDA */}
+      {/* 🔥 BOTÓN VOLVER MOVIDO A LA DERECHA */}
       <button
-        onClick={handleGoBack}
+        onClick={handleVolver}
+        disabled={loading}
         style={{
           position: "absolute",
-          top: "15px",
-          left: "15px",
-          background: "#f8f9fa",
-          border: "1px solid #ddd",
+          top: "20px",
+          right: "20px", // 🔥 Cambiado de left a right
+          background: "transparent",
+          border: "1px solid #BCA88F",
+          color: "#BCA88F",
+          padding: "8px 16px",
           borderRadius: "8px",
-          padding: "8px 12px",
-          cursor: "pointer",
-          fontSize: "0.8rem",
+          cursor: loading ? "not-allowed" : "pointer",
+          fontSize: "0.9rem",
           fontWeight: "500",
-          color: "#555",
           display: "flex",
           alignItems: "center",
           gap: "5px",
+          opacity: loading ? 0.5 : 1,
           transition: "all 0.3s ease",
-          zIndex: 10
+          zIndex: 10, // 🔥 Asegurar que esté por encima
         }}
         onMouseEnter={(e) => {
-          e.target.style.background = "#e9ecef";
-          e.target.style.color = "#333";
+          if (!loading) {
+            e.target.style.background = "#BCA88F";
+            e.target.style.color = "#fff";
+          }
         }}
         onMouseLeave={(e) => {
-          e.target.style.background = "#f8f9fa";
-          e.target.style.color = "#555";
+          if (!loading) {
+            e.target.style.background = "transparent";
+            e.target.style.color = "#BCA88F";
+          }
         }}
-        disabled={loading}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         Volver
@@ -406,8 +450,39 @@ export default function UploadForm() {
       <h2 style={{ fontWeight: 600, color: "#3B2F2F" }}>
         Magnético Fotoimanes
       </h2>
+      
+      {/* Mostrar información del plan */}
+      {planSeleccionado && (
+        <div style={{
+          background: "#E8F5E9",
+          border: "2px solid #4CAF50",
+          borderRadius: "10px",
+          padding: "15px",
+          marginBottom: "20px",
+          textAlign: "left"
+        }}>
+          <h3 style={{ margin: "0 0 10px 0", color: "#2E7D32", fontSize: "1.1rem" }}>
+            📦 Plan {planSeleccionado.plan}
+          </h3>
+          <p style={{ margin: "5px 0", fontSize: "0.9rem" }}>
+            <strong>Cantidad:</strong> {planSeleccionado.cantidad} fotoimanes
+          </p>
+          <p style={{ margin: "5px 0", fontSize: "0.9rem" }}>
+            <strong>Precio total:</strong> {fmtARS(planSeleccionado.precio_total)}
+          </p>
+          {planSeleccionado.descuento > 0 && (
+            <p style={{ margin: "5px 0", fontSize: "0.9rem", color: "#4CAF50" }}>
+              <strong>Descuento:</strong> {planSeleccionado.descuento}% OFF
+            </p>
+          )}
+        </div>
+      )}
+
       <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: 20 }}>
-        Subí tus fotos, recortalas y completá tus datos para el envío ✨
+        {planSeleccionado 
+          ? `Subí exactamente ${planSeleccionado.cantidad} fotos para tu plan ${planSeleccionado.plan} ✨`
+          : "Subí tus fotos, recortalas y completá tus datos para el envío ✨"
+        }
       </p>
 
       {/* SECCIÓN DE DATOS PERSONALES */}
@@ -470,7 +545,7 @@ export default function UploadForm() {
               opacity: loading ? 0.6 : 1,
               cursor: loading ? "not-allowed" : "pointer"
             }}
-            disabled={loading || photos.length >= 20}
+            disabled={loading || photos.length >= maxFotos}
           />
           <small style={{ 
             position: "absolute", 
@@ -480,7 +555,7 @@ export default function UploadForm() {
             color: "#666",
             fontSize: "0.8rem"
           }}>
-            {photos.length}/20
+            {photos.length}/{maxFotos}
           </small>
         </div>
 
@@ -579,15 +654,29 @@ export default function UploadForm() {
         )}
       </div>
 
+      {/* Resumen según plan o sistema antiguo */}
       {photos.length > 0 && (
         <div style={summaryStyle}>
-          {priceLoading ? (
-            "Cargando precio..."
-          ) : (
+          {planSeleccionado ? (
             <>
-              {photos.length} foto{photos.length > 1 ? "s" : ""} × {fmtARS(price)} ={" "}
-              <strong>{fmtARS(total)}</strong>
+              <strong>Plan {planSeleccionado.plan}:</strong> {photos.length}/{planSeleccionado.cantidad} fotos
+              <br />
+              <strong>Total: {fmtARS(total)}</strong>
+              {planSeleccionado.descuento > 0 && (
+                <div style={{ fontSize: "0.8rem", color: "#4CAF50", marginTop: "5px" }}>
+                  Incluye {planSeleccionado.descuento}% de descuento
+                </div>
+              )}
             </>
+          ) : (
+            priceLoading ? (
+              "Cargando precio..."
+            ) : (
+              <>
+                {photos.length} foto{photos.length > 1 ? "s" : ""} × {fmtARS(price)} ={" "}
+                <strong>{fmtARS(total)}</strong>
+              </>
+            )
           )}
         </div>
       )}
@@ -636,68 +725,38 @@ export default function UploadForm() {
 
       <button
         onClick={handleSendPhotos}
-        disabled={loading || photos.length < 4 || priceLoading}
+        disabled={loading || photos.length < minFotos || (planSeleccionado && photos.length !== planSeleccionado.cantidad)}
         style={{
           width: "100%",
-          background: (loading || photos.length < 4 || priceLoading) ? "#ccc" : "#BCA88F",
+          background: (loading || photos.length < minFotos || (planSeleccionado && photos.length !== planSeleccionado.cantidad)) ? "#ccc" : "#BCA88F",
           color: "#fff",
           border: "none",
           padding: "14px",
           borderRadius: "10px",
           fontWeight: "600",
           fontSize: "1rem",
-          cursor: (loading || photos.length < 4 || priceLoading) ? "not-allowed" : "pointer",
+          cursor: (loading || photos.length < minFotos || (planSeleccionado && photos.length !== planSeleccionado.cantidad)) ? "not-allowed" : "pointer",
           transition: "background 0.3s ease",
         }}
         onMouseEnter={(e) => {
-          if (!loading && photos.length >= 4 && !priceLoading) {
+          if (!loading && photos.length >= minFotos && (!planSeleccionado || photos.length === planSeleccionado.cantidad)) {
             e.target.style.background = "#A8927A";
           }
         }}
         onMouseLeave={(e) => {
-          if (!loading && photos.length >= 4 && !priceLoading) {
+          if (!loading && photos.length >= minFotos && (!planSeleccionado || photos.length === planSeleccionado.cantidad)) {
             e.target.style.background = "#BCA88F";
           }
         }}
       >
         {loading ? (
           "⏳ Procesando..."
-        ) : priceLoading ? (
-          "⏳ Cargando..."
+        ) : planSeleccionado ? (
+          `📤 Enviar ${photos.length}/${planSeleccionado.cantidad} Fotos y Pagar ${fmtARS(total)}`
         ) : (
           `📤 Enviar ${photos.length} Foto${photos.length > 1 ? 's' : ''} y Pagar ${fmtARS(total)}`
         )}
       </button>
-
-      {/* 🔥 BOTÓN VOLVER ADICIONAL AL FINAL */}
-      <div style={{ marginTop: "15px" }}>
-        <button
-          onClick={handleGoBack}
-          style={{
-            background: "transparent",
-            border: "1px solid #ddd",
-            color: "#666",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            fontWeight: "500",
-            transition: "all 0.3s ease",
-            width: "100%"
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = "#f8f9fa";
-            e.target.style.color = "#333";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = "transparent";
-            e.target.style.color = "#666";
-          }}
-          disabled={loading}
-        >
-          ← Volver al Inicio
-        </button>
-      </div>
 
       {/* Modal de recorte */}
       {cropIndex !== null && (
@@ -792,7 +851,7 @@ export default function UploadForm() {
   );
 }
 
-// Estilos (sin cambios)
+// Estilos (se mantienen igual)
 const inputStyle = {
   width: "100%",
   padding: "12px",

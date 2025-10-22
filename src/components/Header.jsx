@@ -1,9 +1,9 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Header = ({ onCtaClick, onSmoothScroll }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleCtaClick = (e) => {
     e.preventDefault();
@@ -11,12 +11,36 @@ const Header = ({ onCtaClick, onSmoothScroll }) => {
     navigate('/crear-fotoimanes');
   };
 
-  const handleSmoothScroll = (e, targetId) => {
+  const handleNavigation = (e, target) => {
     e.preventDefault();
-    const element = document.querySelector(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    
+    if (target.startsWith('#')) {
+      // Es un anchor link para scroll suave
+      if (location.pathname === '/') {
+        // Si ya estamos en la página principal, hacer scroll
+        const element = document.querySelector(target);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Si estamos en otra página, navegar a la principal y luego hacer scroll
+        navigate('/');
+        setTimeout(() => {
+          const element = document.querySelector(target);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    } else {
+      // Es una ruta normal
+      navigate(target);
     }
+  };
+
+  const handlePreciosClick = (e) => {
+    e.preventDefault();
+    navigate('/precios');
   };
 
   return (
@@ -24,7 +48,7 @@ const Header = ({ onCtaClick, onSmoothScroll }) => {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <img 
-             src="/logo.png"
+            src="/logo.png"
             alt="MagnetiCo Logo" 
             className="w-12 h-12 rounded-full object-cover mr-3"
           />
@@ -33,30 +57,30 @@ const Header = ({ onCtaClick, onSmoothScroll }) => {
         
         <nav className="hidden md:flex space-x-8">
           <a 
-            href="#inicio" 
+            href="/"
             className="text-gray-600 hover:text-purple-600 font-medium"
-            onClick={(e) => handleSmoothScroll(e, '#inicio')}
+            onClick={(e) => handleNavigation(e, '/')}
           >
             Inicio
           </a>
           <a 
             href="#galeria" 
             className="text-gray-600 hover:text-purple-600 font-medium"
-            onClick={(e) => handleSmoothScroll(e, '#galeria')}
+            onClick={(e) => handleNavigation(e, '#galeria')}
           >
             Galería
           </a>
           <a 
             href="#como-funciona" 
             className="text-gray-600 hover:text-purple-600 font-medium"
-            onClick={(e) => handleSmoothScroll(e, '#como-funciona')}
+            onClick={(e) => handleNavigation(e, '#como-funciona')}
           >
             Cómo Funciona
           </a>
           <a 
-            href="#precios" 
+            href="/precios" 
             className="text-gray-600 hover:text-purple-600 font-medium"
-            onClick={(e) => handleSmoothScroll(e, '#precios')}
+            onClick={handlePreciosClick}
           >
             Precios
           </a>
