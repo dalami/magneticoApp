@@ -7,8 +7,9 @@ DirectoryIndex index.html
 
 # Redireccionar si alguien agrega slash al final
 RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^(.*)/$ /$1 [R=301,L]
+RewriteCond %{REQUEST_URI} ^(.+)/$
+RewriteCond %{REQUEST_URI} !^/$
+RewriteRule ^(.+)/$ /$1 [R=301,L]
 
 # Para React Router - redirigir todas las rutas a index.html
 RewriteCond %{REQUEST_FILENAME} !-f

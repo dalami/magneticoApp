@@ -48,7 +48,7 @@ const Header = ({ onCtaClick, onSmoothScroll }) => {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <img 
-            src="/logo.png"
+            src="images/logo.png"
             alt="MagnetiCo Logo" 
             className="w-12 h-12 rounded-full object-cover mr-3"
           />
