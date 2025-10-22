@@ -1,0 +1,35 @@
+DirectoryIndex index.html
+
+# Forzar tratamiento como archivo (evitar que index.html sea carpeta)
+<Files "index.html">
+  ForceType text/html
+</Files>
+
+# Redireccionar si alguien agrega slash al final
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^(.*)/$ /$1 [R=301,L]
+
+# Para React Router - redirigir todas las rutas a index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+
+# Compresión GZIP para mejor performance
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/json
+  AddOutputFilterByType DEFLATE application/javascript text/javascript
+  AddOutputFilterByType DEFLATE text/xml application/xml
+</IfModule>
+
+# Cache headers para mejores tiempos de carga
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/gif "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType text/html "access plus 1 hour"
+</IfModule>
