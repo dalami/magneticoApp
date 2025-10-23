@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import { api } from "../Lib/api.js";
 import { fmtARS } from "../Lib/currency.js";
-import logo from "/magnetocp.jpg";
+
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function UploadForm() {
@@ -467,7 +467,7 @@ export default function UploadForm() {
       </button>
 
       <img
-        src={logo}
+         src="/images/magnetocp.jpg"
         alt="Magnético"
         style={{
           width: 100,

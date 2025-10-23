@@ -1,0 +1,10 @@
+# robots.txt para MagnetiCo Fotoimanes
+User-agent: *
+Allow: /
+
+# Evita que se indexen carpetas internas de desarrollo
+Disallow: /node_modules/
+Disallow: /assets/
+Disallow: /api/
+
+Sitemap: https://tudominio.com/sitemap.xml

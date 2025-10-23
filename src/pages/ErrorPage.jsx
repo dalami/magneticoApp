@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import logo from "images/magnetocp.jpg";
+
 
 export default function ErrorPage() {
   const navigate = useNavigate();
@@ -103,7 +103,7 @@ export default function ErrorPage() {
       </div>
 
       <img
-        src={logo}
+        src="/images/magnetocp.jpg"
         alt="Magnético Fotoimanes"
         style={{
           width: "100px",

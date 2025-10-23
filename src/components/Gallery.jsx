@@ -9,15 +9,15 @@ const Gallery = () => {
   };
 
   const galleryItems = [
-    { id: 1, title: 'Familia', bgColor: 'bg-purple-200', image: 'images/familia.jpeg' },
-    { id: 2, title: 'Mascotas', bgColor: 'bg-blue-200', image: 'images/mascotas.jpeg' },
-    { id: 3, title: 'Bodas', bgColor: 'bg-green-200', image: 'images/boda.jpeg' },
-    { id: 4, title: 'Viajes', bgColor: 'bg-yellow-200', image: 'images/viajes.jpeg' },
-    { id: 5, title: 'Amigos', bgColor: 'bg-red-200', image: 'images/amigos.jpeg' },
-    { id: 6, title: 'Eventos', bgColor: 'bg-indigo-200', image: 'images/eventos.jpeg' },
-    { id: 7, title: 'Corporativo', bgColor: 'bg-pink-200', image: 'images/corporativo.jpeg' },
-    { id: 8, title: 'Vacaciones', bgColor: 'bg-teal-200', image: 'images/vacaciones.jpeg' }
-  ];
+  { id: 1, title: 'Familia', bgColor: 'bg-purple-200', image: '/images/familia.jpeg' },
+  { id: 2, title: 'Mascotas', bgColor: 'bg-blue-200', image: '/images/mascotas.jpeg' },
+  { id: 3, title: 'Bodas', bgColor: 'bg-green-200', image: '/images/boda.jpeg' },
+  { id: 4, title: 'Viajes', bgColor: 'bg-yellow-200', image: '/images/viajes.jpeg' },
+  { id: 5, title: 'Amigos', bgColor: 'bg-red-200', image: '/images/amigos.jpeg' },
+  { id: 6, title: 'Eventos', bgColor: 'bg-indigo-200', image: '/images/eventos.jpeg' },
+  { id: 7, title: 'Corporativo', bgColor: 'bg-pink-200', image: '/images/corporativo.jpeg' },
+  { id: 8, title: 'Vacaciones', bgColor: 'bg-teal-200', image: '/images/vacaciones.jpeg' }
+];
 
   return (
     <section id="galeria" className="py-16 bg-white">

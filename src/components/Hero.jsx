@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import videoSrc from '/2.mp4';
+
 
 
 const Hero = () => {
@@ -47,7 +47,7 @@ const Hero = () => {
         <div className="md:w-1/2 flex justify-center relative">
           <div className="relative w-full max-w-lg">
             <video className="w-full h-78 object-cover rounded-2xl shadow-2xl" autoPlay muted loop playsInline>
-             <source src={videoSrc} type="video/mp4" />
+              <source src="/images/2.mp4" type="video/mp4" />
               Tu navegador no soporta el elemento de video.
             </video>
           </div>
