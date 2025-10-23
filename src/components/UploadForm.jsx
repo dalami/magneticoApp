@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import { api } from "../Lib/api.js";
 import { fmtARS } from "../Lib/currency.js";
-
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function UploadForm() {
@@ -27,7 +26,7 @@ export default function UploadForm() {
   const [showManualRedirect, setShowManualRedirect] = useState(false);
   const [rotation, setRotation] = useState(0);
 
-  // 🔥 FUNCIÓN PARA VOLVER - MOVIDA A LA DERECHA
+  // 🔥 FUNCIÓN PARA VOLVER
   const handleVolver = () => {
     if (loading) return;
 
@@ -74,14 +73,28 @@ export default function UploadForm() {
     }
   }, [location]);
 
-  // Resto del código se mantiene igual...
   const total = planSeleccionado
     ? planSeleccionado.precio_total
     : photos.length * price;
 
   const maxFotos = planSeleccionado ? planSeleccionado.cantidad : 20;
-
   const minFotos = planSeleccionado ? planSeleccionado.cantidad : 4;
+
+  // DEBUG: Mostrar estado actual
+  useEffect(() => {
+    console.log("🔍 DEBUG Estado actual:", {
+      loading,
+      photosCount: photos.length,
+      minFotos,
+      maxFotos,
+      planSeleccionado,
+      planCantidad: planSeleccionado?.cantidad,
+      isButtonDisabled:
+        loading ||
+        photos.length < minFotos ||
+        (planSeleccionado && photos.length !== planSeleccionado.cantidad),
+    });
+  }, [loading, photos, minFotos, planSeleccionado]);
 
   const compressImage = useCallback((file, maxWidth = 1200, quality = 0.8) => {
     return new Promise((resolve) => {
@@ -271,11 +284,14 @@ export default function UploadForm() {
   };
 
   const handleSendPhotos = async () => {
+    console.log("🔄 Iniciando handleSendPhotos...");
+
     setError("");
     setSuccess("");
     setShowManualRedirect(false);
     setMpUrl("");
 
+    // Validaciones
     if (!name.trim()) {
       setError("Por favor ingresá tu nombre completo");
       return;
@@ -329,11 +345,9 @@ export default function UploadForm() {
       setError("");
       setSuccess("⏳ Procesando tu pedido...");
 
-      console.log(
-        "🚀 Enviando pedido:",
-        planSeleccionado ? `Plan ${planSeleccionado.plan}` : "Sistema unitario"
-      );
+      console.log("🚀 Enviando pedido a /send-photos...");
 
+      // 🔥 CORRECCIÓN: Usar el endpoint correcto
       const res = await api.post("/send-photos", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -347,20 +361,29 @@ export default function UploadForm() {
         const mercadoPagoUrl = res.data.payment.init_point;
         setMpUrl(mercadoPagoUrl);
 
-        console.log("🎯 Redirigiendo a Mercado Pago:", mercadoPagoUrl);
+        console.log("🎯 URL Mercado Pago:", mercadoPagoUrl);
         setSuccess("✅ ¡Pedido exitoso! Redirigiendo a Mercado Pago...");
 
-        setTimeout(() => {
-          window.location.href = mercadoPagoUrl;
-        }, 500);
+        // Abrir Mercado Pago en nueva pestaña
+        const mpWindow = window.open(mercadoPagoUrl, "_blank");
 
+        // 🔥 CERRAR LOADING INMEDIATAMENTE después de abrir MP
+        setLoading(false);
+        setSuccess(
+          "✅ ¡Pedido exitoso! Completá el pago en la nueva ventana de Mercado Pago."
+        );
+
+        // Focus en la nueva ventana
+        if (mpWindow) {
+          mpWindow.focus();
+        }
+
+        // Mostrar botón manual como backup
         setTimeout(() => {
           setShowManualRedirect(true);
-          setSuccess(
-            "✅ ¡Pedido exitoso! Si no te redirige automáticamente, hacé clic en el botón 'IR A MERCADO PAGO'"
-          );
-        }, 3000);
+        }, 2000);
       } else {
+        console.error("❌ No se recibió init_point en la respuesta");
         setError("No se recibió link de pago del servidor");
         setLoading(false);
       }
@@ -402,6 +425,21 @@ export default function UploadForm() {
     };
   }, [photos]);
 
+  // Calcular si el botón debe estar deshabilitado
+  const isButtonDisabled =
+    loading ||
+    photos.length < minFotos ||
+    (planSeleccionado ? photos.length !== planSeleccionado.cantidad : false);
+
+  console.log("🔘 Estado del botón:", {
+    isButtonDisabled,
+    loading,
+    photosCount: photos.length,
+    minFotos,
+    planSeleccionado: !!planSeleccionado,
+    planCantidad: planSeleccionado?.cantidad,
+  });
+
   return (
     <div
       style={{
@@ -417,14 +455,14 @@ export default function UploadForm() {
         position: "relative",
       }}
     >
-      {/* 🔥 BOTÓN VOLVER MOVIDO A LA DERECHA */}
+      {/* BOTÓN VOLVER */}
       <button
         onClick={handleVolver}
         disabled={loading}
         style={{
           position: "absolute",
           top: "20px",
-          right: "20px", // 🔥 Cambiado de left a right
+          right: "20px",
           background: "transparent",
           border: "1px solid #BCA88F",
           color: "#BCA88F",
@@ -438,7 +476,7 @@ export default function UploadForm() {
           gap: "5px",
           opacity: loading ? 0.5 : 1,
           transition: "all 0.3s ease",
-          zIndex: 10, // 🔥 Asegurar que esté por encima
+          zIndex: 10,
         }}
         onMouseEnter={(e) => {
           if (!loading) {
@@ -467,7 +505,7 @@ export default function UploadForm() {
       </button>
 
       <img
-         src="/images/magnetocp.jpg"
+        src="/images/magnetocp.jpg"
         alt="Magnético"
         style={{
           width: 100,
@@ -788,53 +826,44 @@ export default function UploadForm() {
         </button>
       )}
 
+      {/* BOTÓN PRINCIPAL CON DEBUG */}
       <button
         onClick={handleSendPhotos}
-        disabled={
-          loading ||
-          photos.length < minFotos ||
-          (planSeleccionado && photos.length !== planSeleccionado.cantidad)
-        }
+        disabled={isButtonDisabled}
         style={{
           width: "100%",
-          background:
-            loading ||
-            photos.length < minFotos ||
-            (planSeleccionado && photos.length !== planSeleccionado.cantidad)
-              ? "#ccc"
-              : "#BCA88F",
+          background: isButtonDisabled ? "#ccc" : "#BCA88F",
           color: "#fff",
           border: "none",
           padding: "14px",
           borderRadius: "10px",
           fontWeight: "600",
           fontSize: "1rem",
-          cursor:
-            loading ||
-            photos.length < minFotos ||
-            (planSeleccionado && photos.length !== planSeleccionado.cantidad)
-              ? "not-allowed"
-              : "pointer",
+          cursor: isButtonDisabled ? "not-allowed" : "pointer",
           transition: "background 0.3s ease",
         }}
         onMouseEnter={(e) => {
-          if (
-            !loading &&
-            photos.length >= minFotos &&
-            (!planSeleccionado || photos.length === planSeleccionado.cantidad)
-          ) {
+          if (!isButtonDisabled) {
             e.target.style.background = "#A8927A";
           }
         }}
         onMouseLeave={(e) => {
-          if (
-            !loading &&
-            photos.length >= minFotos &&
-            (!planSeleccionado || photos.length === planSeleccionado.cantidad)
-          ) {
+          if (!isButtonDisabled) {
             e.target.style.background = "#BCA88F";
           }
         }}
+        title={
+          isButtonDisabled
+            ? `Condiciones no cumplidas: 
+          loading: ${loading}
+          fotos: ${photos.length}/${minFotos}
+          plan: ${
+            planSeleccionado
+              ? `${photos.length}/${planSeleccionado.cantidad}`
+              : "N/A"
+          }`
+            : "Enviar pedido"
+        }
       >
         {loading
           ? "⏳ Procesando..."
@@ -846,6 +875,34 @@ export default function UploadForm() {
               photos.length > 1 ? "s" : ""
             } y Pagar ${fmtARS(total)}`}
       </button>
+
+      {/* DEBUG INFO (solo en desarrollo) */}
+      {process.env.NODE_ENV === "development" && (
+        <div
+          style={{
+            marginTop: "10px",
+            padding: "10px",
+            background: "#f5f5f5",
+            borderRadius: "5px",
+            fontSize: "0.8rem",
+            textAlign: "left",
+          }}
+        >
+          <strong>DEBUG:</strong>
+          <br />
+          Loading: {loading ? "✅" : "❌"}
+          <br />
+          Fotos: {photos.length}/{minFotos}{" "}
+          {photos.length >= minFotos ? "✅" : "❌"}
+          <br />
+          {planSeleccionado &&
+            `Plan: ${photos.length}/${planSeleccionado.cantidad} ${
+              photos.length === planSeleccionado.cantidad ? "✅" : "❌"
+            }`}
+          <br />
+          Botón: {isButtonDisabled ? "❌ DESHABILITADO" : "✅ HABILITADO"}
+        </div>
+      )}
 
       {/* Modal de recorte */}
       {cropIndex !== null && (
