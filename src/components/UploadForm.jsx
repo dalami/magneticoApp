@@ -4,6 +4,260 @@ import { api } from "../Lib/api.js";
 import { fmtARS } from "../Lib/currency.js";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// 🔥 COMPONENTE MERCADO PAGO REDIRECT MEJORADO
+function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
+  const [bricksInitialized, setBricksInitialized] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleDirectRedirect = () => {
+    const mpUrl = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${preferenceId}`;
+    window.open(mpUrl, '_blank');
+  };
+
+  useEffect(() => {
+    const initializeBricks = async () => {
+      try {
+        console.log('🎯 Inicializando Card Payment Bricks...');
+        console.log('💰 Importe a pagar:', totalAmount);
+
+        if (typeof window.MercadoPago === 'undefined') {
+          throw new Error('SDK de MercadoPago no cargado');
+        }
+
+        const container = document.getElementById('mercado-pago-bricks');
+        if (!container) {
+          throw new Error('Contenedor no encontrado');
+        }
+
+        container.innerHTML = '';
+
+        const mp = new window.MercadoPago('APP_USR-862968a6-afde-448c-a926-60c278057087', {
+          locale: 'es-AR'
+        });
+
+        const bricksBuilder = mp.bricks();
+
+        await bricksBuilder.create('cardPayment', 'mercado-pago-bricks', {
+          initialization: {
+            amount: totalAmount,
+            preferenceId: preferenceId,
+          },
+          customization: {
+            visual: {
+              style: {
+                theme: 'default'
+              }
+            },
+            texts: {
+              formTitle: `Pagar $${totalAmount?.toLocaleString('es-AR') || '0'}`,
+              emailSectionTitle: 'Email',
+              cardSectionTitle: 'Método de pago',
+              installmentsSectionTitle: 'Cuotas',
+              cardHolderNameLabel: 'Nombre del titular',
+              cardHolderNamePlaceholder: 'Como figura en la tarjeta',
+              cardNumberLabel: 'Número de la tarjeta',
+              cardNumberPlaceholder: '1234 5678 9012 3456',
+              cardExpirationDateLabel: 'Fecha de vencimiento',
+              cardExpirationDatePlaceholder: 'MM/AA',
+              securityCodeLabel: 'Código de seguridad',
+              securityCodePlaceholder: '123',
+              installmentsLabel: 'Cuotas',
+              installmentsPlaceholder: 'Seleccionar cantidad de cuotas',
+              formSubmit: `Pagar $${totalAmount?.toLocaleString('es-AR') || '0'}`,
+              payerEmailLabel: 'Email de facturación'
+            }
+          },
+          callbacks: {
+            onReady: () => {
+              console.log('✅ Card Payment Bricks listo');
+              setBricksInitialized(true);
+            },
+            onError: (error) => {
+              console.error('❌ Error en Card Payment Bricks:', error);
+              setError(`Error en el pago: ${error.message}`);
+            },
+          },
+        });
+
+      } catch (err) {
+        console.error('💥 Error:', err);
+        setError(err.message);
+      }
+    };
+
+    initializeBricks();
+
+    return () => {
+      const container = document.getElementById('mercado-pago-bricks');
+      if (container) container.innerHTML = '';
+    };
+  }, [preferenceId, totalAmount]);
+
+  if (error) {
+    return (
+      <div style={paymentModalOverlay}>
+        <div style={{...paymentModalContent, maxWidth: '450px', padding: '25px', textAlign: 'center'}}>
+          <div style={{fontSize: '48px', marginBottom: '15px'}}>❌</div>
+          <h3 style={{color: '#C0392B', marginBottom: '15px'}}>Error en el pago</h3>
+          <p style={{marginBottom: '10px', color: '#666'}}>{error}</p>
+          <p style={{marginBottom: '20px', fontSize: '0.9rem', color: '#888'}}>
+            Podés intentar pagar directamente en MercadoPago
+          </p>
+          <div style={{display: 'flex', gap: '10px', flexDirection: 'column'}}>
+            <button 
+              onClick={handleDirectRedirect}
+              style={{
+                background: '#009EE3',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              💳 Pagar en Mercado Pago
+            </button>
+            <button 
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Volver al formulario
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={paymentModalOverlay}>
+      <div style={{...paymentModalContent, maxWidth: '500px', width: '95%'}}>
+        <div style={{
+          padding: '20px',
+          background: '#BCA88F',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <h3 style={{margin: 0, fontSize: '1.2rem'}}>💳 Completá tu pago</h3>
+            <p style={{margin: '5px 0 0 0', fontSize: '1.1rem', fontWeight: 'bold'}}>
+              Total: ${totalAmount?.toLocaleString('es-AR') || '0'}
+            </p>
+          </div>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'white',
+              fontSize: '24px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              padding: '0',
+              width: '30px',
+              height: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Cerrar"
+          >
+            ×
+          </button>
+        </div>
+        
+        <div style={{padding: '25px'}}>
+          <div style={{
+            background: '#f8f9fa',
+            padding: '15px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h4 style={{margin: '0 0 10px 0', color: '#495057'}}>Resumen de tu pedido</h4>
+            <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#6c757d'}}>
+              <strong>Orden:</strong> {orderId}
+            </p>
+            <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#6c757d'}}>
+              <strong>Importe:</strong> ${totalAmount?.toLocaleString('es-AR') || '0'}
+            </p>
+          </div>
+
+          {!bricksInitialized ? (
+            <div style={{textAlign: 'center', padding: '40px 20px'}}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                border: '4px solid #f3f3f3',
+                borderTop: '4px solid #BCA88F',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 20px'
+              }}></div>
+              <p style={{margin: '0 0 10px 0', fontWeight: '500'}}>
+                Cargando métodos de pago...
+              </p>
+              <p style={{fontSize: '0.8rem', color: '#666', margin: 0}}>
+                Importe: ${totalAmount?.toLocaleString('es-AR') || '0'}
+              </p>
+            </div>
+          ) : (
+            <div style={{textAlign: 'center', marginBottom: '15px'}}>
+              <p style={{color: '#4CAF50', fontWeight: '500', margin: '0 0 10px 0'}}>
+                ✅ Métodos de pago cargados correctamente
+              </p>
+            </div>
+          )}
+          
+          <div 
+            id="mercado-pago-bricks"
+            style={{ 
+              minHeight: '400px',
+              width: '100%',
+              opacity: bricksInitialized ? 1 : 0.5,
+              transition: 'opacity 0.3s ease'
+            }}
+          ></div>
+
+          <div style={{marginTop: '15px', textAlign: 'center'}}>
+            <button 
+              onClick={handleDirectRedirect}
+              style={{
+                background: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.8rem'
+              }}
+            >
+              ¿Problemas con el pago? Pagar directamente en MercadoPago
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function UploadForm() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,25 +276,49 @@ export default function UploadForm() {
   const [success, setSuccess] = useState("");
   const [price, setPrice] = useState(2000);
   const [priceLoading, setPriceLoading] = useState(true);
-  const [mpUrl, setMpUrl] = useState("");
-  const [showManualRedirect, setShowManualRedirect] = useState(false);
   const [rotation, setRotation] = useState(0);
 
-  // 🔥 FUNCIÓN PARA VOLVER
-  const handleVolver = () => {
-    if (loading) return;
+  // 🔥 ESTADOS PARA EL MODAL DE PAGO
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentPreferenceId, setPaymentPreferenceId] = useState("");
+  const [paymentOrderId, setPaymentOrderId] = useState("");
+  const [paymentTotalAmount, setPaymentTotalAmount] = useState(0);
 
-    if (photos.length > 0) {
-      const confirmar = window.confirm(
-        "¿Estás seguro de que querés volver? Se perderán las fotos que subiste."
-      );
-      if (!confirmar) return;
+  // 🔥 VARIABLES CALCULADAS - DEFINIR ANTES DEL RETURN
+  const total = planSeleccionado
+    ? planSeleccionado.precio_total
+    : photos.length * price;
+
+  const maxFotos = planSeleccionado ? planSeleccionado.cantidad : 20;
+  const minFotos = planSeleccionado ? planSeleccionado.cantidad : 4;
+
+  const isButtonDisabled =
+    loading ||
+    photos.length < minFotos ||
+    (planSeleccionado ? photos.length !== planSeleccionado.cantidad : false);
+
+  // 🔥 EFFECT PARA REDIRECCIÓN DE MP
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const preferenceId = urlParams.get('preference-id');
+    const correlationId = urlParams.get('correlation_id');
+    
+    if (preferenceId) {
+      console.log('🔄 Detectada redirección de MercadoPago');
+      console.log('Preference ID:', preferenceId);
+      console.log('Correlation ID:', correlationId);
+      
+      setPaymentPreferenceId(preferenceId);
+      setShowPaymentModal(true);
+      
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+      
+      setSuccess("✅ ¡Pedido procesado! Completá el pago a continuación.");
     }
+  }, []);
 
-    navigate(-1);
-  };
-
-  // Obtener plan seleccionado desde la navegación
+  // 🔥 OBTENER PLAN SELECCIONADO
   useEffect(() => {
     if (location.state?.planSeleccionado) {
       setPlanSeleccionado(location.state.planSeleccionado);
@@ -73,29 +351,21 @@ export default function UploadForm() {
     }
   }, [location]);
 
-  const total = planSeleccionado
-    ? planSeleccionado.precio_total
-    : photos.length * price;
+  // 🔥 FUNCIÓN PARA VOLVER
+  const handleVolver = () => {
+    if (loading) return;
 
-  const maxFotos = planSeleccionado ? planSeleccionado.cantidad : 20;
-  const minFotos = planSeleccionado ? planSeleccionado.cantidad : 4;
+    if (photos.length > 0) {
+      const confirmar = window.confirm(
+        "¿Estás seguro de que querés volver? Se perderán las fotos que subiste."
+      );
+      if (!confirmar) return;
+    }
 
-  // DEBUG: Mostrar estado actual
-  useEffect(() => {
-    console.log("🔍 DEBUG Estado actual:", {
-      loading,
-      photosCount: photos.length,
-      minFotos,
-      maxFotos,
-      planSeleccionado,
-      planCantidad: planSeleccionado?.cantidad,
-      isButtonDisabled:
-        loading ||
-        photos.length < minFotos ||
-        (planSeleccionado && photos.length !== planSeleccionado.cantidad),
-    });
-  }, [loading, photos, minFotos, planSeleccionado]);
+    navigate(-1);
+  };
 
+  // 🔥 COMPRESIÓN DE IMÁGENES
   const compressImage = useCallback((file, maxWidth = 1200, quality = 0.8) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -125,6 +395,7 @@ export default function UploadForm() {
     });
   }, []);
 
+  // 🔥 MANEJO DE SUBIDA DE ARCHIVOS
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
 
@@ -149,7 +420,7 @@ export default function UploadForm() {
     try {
       setError("");
       setSuccess("");
-      setShowManualRedirect(false);
+      setShowPaymentModal(false);
 
       setSuccess("⏳ Comprimiendo imágenes...");
 
@@ -176,11 +447,13 @@ export default function UploadForm() {
     }
   };
 
+  // 🔥 ELIMINAR FOTO
   const removePhoto = (index) => {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
     setError("");
   };
 
+  // 🔥 ROTAR FOTO
   const rotatePhoto = (index, degrees = 90) => {
     setPhotos((prev) =>
       prev.map((file, i) => {
@@ -197,6 +470,7 @@ export default function UploadForm() {
     );
   };
 
+  // 🔥 RECORTAR IMAGEN
   const getCroppedImg = useCallback(
     async (imageSrc, cropAreaPixels, rotation = 0) => {
       return new Promise((resolve) => {
@@ -246,6 +520,7 @@ export default function UploadForm() {
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
+  // 🔥 GUARDAR RECORTE
   const saveCrop = async () => {
     if (cropIndex === null || !croppedAreaPixels) return;
 
@@ -276,6 +551,7 @@ export default function UploadForm() {
     }
   };
 
+  // 🔥 ROTAR EN MODAL
   const rotateInModal = (degrees = 90) => {
     setRotation((prev) => {
       const newRotation = (prev + degrees) % 360;
@@ -283,13 +559,13 @@ export default function UploadForm() {
     });
   };
 
+  // 🔥 ENVIAR FOTOS Y PROCESAR PEDIDO
   const handleSendPhotos = async () => {
     console.log("🔄 Iniciando handleSendPhotos...");
 
     setError("");
     setSuccess("");
-    setShowManualRedirect(false);
-    setMpUrl("");
+    setShowPaymentModal(false);
 
     // Validaciones
     if (!name.trim()) {
@@ -347,7 +623,6 @@ export default function UploadForm() {
 
       console.log("🚀 Enviando pedido a /send-photos...");
 
-      // 🔥 CORRECCIÓN: Usar el endpoint correcto
       const res = await api.post("/send-photos", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -357,36 +632,24 @@ export default function UploadForm() {
 
       console.log("✅ Respuesta del servidor:", res.data);
 
-      if (res.data?.payment?.init_point) {
-        const mercadoPagoUrl = res.data.payment.init_point;
-        setMpUrl(mercadoPagoUrl);
-
-        console.log("🎯 URL Mercado Pago:", mercadoPagoUrl);
-        setSuccess("✅ ¡Pedido exitoso! Redirigiendo a Mercado Pago...");
-
-        // Abrir Mercado Pago en nueva pestaña
-        const mpWindow = window.open(mercadoPagoUrl, "_blank");
-
-        // 🔥 CERRAR LOADING INMEDIATAMENTE después de abrir MP
-        setLoading(false);
-        setSuccess(
-          "✅ ¡Pedido exitoso! Completá el pago en la nueva ventana de Mercado Pago."
-        );
-
-        // Focus en la nueva ventana
-        if (mpWindow) {
-          mpWindow.focus();
-        }
-
-        // Mostrar botón manual como backup
-        setTimeout(() => {
-          setShowManualRedirect(true);
-        }, 2000);
+      if (res.data?.payment?.preference_id) {
+        setPaymentPreferenceId(res.data.payment.preference_id);
+        setPaymentOrderId(res.data.orderId);
+        
+        // 🔥 AGREGAR EL IMPORTE AL MODAL
+        const totalAmount = planSeleccionado 
+          ? planSeleccionado.precio_total 
+          : photos.length * price;
+        setPaymentTotalAmount(totalAmount);
+        
+        setShowPaymentModal(true);
+        setSuccess("✅ ¡Pedido creado! Completá el pago a continuación.");
       } else {
-        console.error("❌ No se recibió init_point en la respuesta");
-        setError("No se recibió link de pago del servidor");
-        setLoading(false);
+        console.error("❌ No se recibió preference_id en la respuesta");
+        setError("No se recibió información de pago del servidor");
       }
+
+      setLoading(false);
     } catch (err) {
       console.error("❌ Error completo:", err);
 
@@ -409,12 +672,15 @@ export default function UploadForm() {
     }
   };
 
-  const handleManualRedirect = () => {
-    if (mpUrl) {
-      window.location.href = mpUrl;
-    }
+  // 🔥 CERRAR MODAL DE PAGO
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPaymentPreferenceId("");
+    setPaymentOrderId("");
+    setPaymentTotalAmount(0);
   };
 
+  // 🔥 CLEANUP DE URLS
   useEffect(() => {
     return () => {
       photos.forEach((photo) => {
@@ -424,12 +690,6 @@ export default function UploadForm() {
       });
     };
   }, [photos]);
-
-  // Calcular si el botón debe estar deshabilitado
-  const isButtonDisabled =
-    loading ||
-    photos.length < minFotos ||
-    (planSeleccionado ? photos.length !== planSeleccionado.cantidad : false);
 
   console.log("🔘 Estado del botón:", {
     isButtonDisabled,
@@ -796,37 +1056,7 @@ export default function UploadForm() {
 
       {success && <div style={msgStyle("#E8F5E9", "#2E7D32")}>{success}</div>}
 
-      {showManualRedirect && mpUrl && (
-        <button
-          onClick={handleManualRedirect}
-          style={{
-            width: "100%",
-            background: "#28a745",
-            color: "#fff",
-            border: "none",
-            padding: "14px",
-            borderRadius: "10px",
-            fontWeight: "600",
-            fontSize: "1rem",
-            cursor: "pointer",
-            marginBottom: "10px",
-            boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = "#218838";
-            e.target.style.transform = "translateY(-2px)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = "#28a745";
-            e.target.style.transform = "translateY(0)";
-          }}
-        >
-          💳 IR A MERCADO PAGO PARA PAGAR
-        </button>
-      )}
-
-      {/* BOTÓN PRINCIPAL CON DEBUG */}
+      {/* BOTÓN PRINCIPAL */}
       <button
         onClick={handleSendPhotos}
         disabled={isButtonDisabled}
@@ -876,38 +1106,20 @@ export default function UploadForm() {
             } y Pagar ${fmtARS(total)}`}
       </button>
 
-      {/* DEBUG INFO (solo en desarrollo) */}
-      {process.env.NODE_ENV === "development" && (
-        <div
-          style={{
-            marginTop: "10px",
-            padding: "10px",
-            background: "#f5f5f5",
-            borderRadius: "5px",
-            fontSize: "0.8rem",
-            textAlign: "left",
-          }}
-        >
-          <strong>DEBUG:</strong>
-          <br />
-          Loading: {loading ? "✅" : "❌"}
-          <br />
-          Fotos: {photos.length}/{minFotos}{" "}
-          {photos.length >= minFotos ? "✅" : "❌"}
-          <br />
-          {planSeleccionado &&
-            `Plan: ${photos.length}/${planSeleccionado.cantidad} ${
-              photos.length === planSeleccionado.cantidad ? "✅" : "❌"
-            }`}
-          <br />
-          Botón: {isButtonDisabled ? "❌ DESHABILITADO" : "✅ HABILITADO"}
-        </div>
+      {/* 🔥 MODAL DE PAGO INTEGRADO */}
+      {showPaymentModal && paymentPreferenceId && (
+        <MercadoPagoRedirect
+          preferenceId={paymentPreferenceId}
+          orderId={paymentOrderId}
+          onClose={handleClosePaymentModal}
+          totalAmount={paymentTotalAmount}
+        />
       )}
 
       {/* Modal de recorte */}
       {cropIndex !== null && (
-        <div style={modalOverlay}>
-          <div style={modalContent}>
+        <div style={cropModalOverlay}>
+          <div style={cropModalContent}>
             <div
               style={{
                 position: "relative",
@@ -1003,7 +1215,52 @@ export default function UploadForm() {
   );
 }
 
-// Estilos (se mantienen igual)
+// 🔥 ESTILOS PARA EL MODAL DE RECORTE
+const cropModalOverlay = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.9)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 1000,
+  padding: "20px",
+};
+
+const cropModalContent = {
+  position: "relative",
+  width: "90vw",
+  maxWidth: "500px",
+  height: "80vh",
+  background: "#000",
+  borderRadius: "12px",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+};
+
+// 🔥 ESTILOS PARA EL MODAL DE PAGO
+const paymentModalOverlay = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.8)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 2000,
+  padding: "20px",
+};
+
+const paymentModalContent = {
+  background: "#fff",
+  borderRadius: "12px",
+  overflow: "hidden",
+  width: "100%",
+  maxWidth: "500px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+};
+
+// Estilos generales
 const inputStyle = {
   width: "100%",
   padding: "12px",
@@ -1017,9 +1274,9 @@ const inputStyle = {
 
 const summaryStyle = {
   background: "#F8F5F0",
-  borderRadius: 8,
-  padding: 12,
-  marginBottom: 15,
+  borderRadius: "8px",
+  padding: "12px",
+  marginBottom: "15px",
   fontWeight: 600,
   color: "#3B2F2F",
   fontSize: "0.9rem",
@@ -1027,7 +1284,7 @@ const summaryStyle = {
 
 const msgStyle = (bg, color) => ({
   backgroundColor: bg,
-  color,
+  color: color,
   padding: "12px",
   borderRadius: "6px",
   marginBottom: "15px",
@@ -1035,29 +1292,6 @@ const msgStyle = (bg, color) => ({
   fontSize: "0.9rem",
   textAlign: "center",
 });
-
-const modalOverlay = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.9)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-  padding: "20px",
-};
-
-const modalContent = {
-  position: "relative",
-  width: "90vw",
-  maxWidth: "500px",
-  height: "80vh",
-  background: "#000",
-  borderRadius: "12px",
-  overflow: "hidden",
-  display: "flex",
-  flexDirection: "column",
-};
 
 const modalButtons = {
   display: "flex",

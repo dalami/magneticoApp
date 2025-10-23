@@ -1,21 +1,79 @@
 <!doctype html>
 <html lang="es">
-    <head>
+<head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fotoimanes - Transforma tus momentos en imanes únicos</title>
     <meta name="description" content="Crea fotoimanes personalizados con tus fotos favoritas. Transforma tus momentos en imanes únicos. Calidad premium, envío rápido. ¡Personaliza tus recuerdos!">
-     <meta name="theme-color" content="#8B5CF6">
+    <meta name="theme-color" content="#8B5CF6">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <!-- Agrega estas líneas -->
+    
+    <!-- SDK de MercadoPago - AGREGADO -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    
+    <!-- Estilos existentes -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
+    
+    <!-- Preconexión para mejorar performance - AGREGADO -->
+    <link rel="preconnect" href="https://sdk.mercadopago.com">
+    <link rel="preconnect" href="https://api.mercadopago.com">
+    
+    <!-- Estilos adicionales para mejorar la experiencia de pago - AGREGADO -->
+    <style>
+        .mercadopago-button {
+            font-family: 'Poppins', sans-serif !important;
+        }
+        
+        /* Loading state para mejor UX */
+        .mp-loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-  </body>
+    
+    <!-- Script de inicialización de MercadoPago - AGREGADO -->
+    <script>
+        // Función para inicializar MercadoPago cuando la página esté lista
+        function initializeMercadoPago() {
+            // Verificar si el SDK se cargó correctamente
+            if (typeof MercadoPago === 'undefined') {
+                console.warn('MercadoPago SDK no se cargó correctamente');
+                // Reintentar después de 1 segundo
+                setTimeout(initializeMercadoPago, 1000);
+                return;
+            }
+            
+            console.log('MercadoPago SDK cargado correctamente');
+            
+            // Configuración global que puede ser usada por React
+            window.MercadoPagoConfig = {
+                publicKey: 'APP_USR-862968a6-afde-448c-a926-60c278057087',
+                locale: 'es-AR',
+                advancedFraudPrevention: true
+            };
+        }
+
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMercadoPago);
+        } else {
+            initializeMercadoPago();
+        }
+
+        // Manejar errores globales de MercadoPago
+        window.addEventListener('error', function(e) {
+            if (e.message.includes('MercadoPago') || e.message.includes('mercadopago')) {
+                console.error('Error global de MercadoPago:', e.error);
+            }
+        });
+    </script>
+</body>
 </html>
