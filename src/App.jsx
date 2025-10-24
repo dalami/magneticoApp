@@ -1,4 +1,4 @@
-// App.jsx
+// App.jsx - VERSIÓN COMPLETA CON TODOS LOS IMPORTS
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
@@ -6,7 +6,8 @@ import {
   Route,
   Navigate,
   useLocation,
-  useNavigate  // ✅ Añadir useNavigate aquí
+  useNavigate,
+  useSearchParams
 } from "react-router-dom";
 
 import Landing from "./pages/Landing.jsx"
@@ -14,31 +15,21 @@ import UploadForm from "./components/UploadForm.jsx";
 import SuccessPage from "./pages/SuccessPage.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
 import Precios from "./pages/Precios.jsx"
-import { ApiUtils } from "./Lib/api.js";
 import "./style.css";
 import "./App.css"
 
-// 🎯 Componente para tracking de analytics y manejo de errores global
+// 🎯 Componente para tracking de analytics
 function RouteTracker() {
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // 📊 Tracking de página (simplificado para desarrollo)
   useEffect(() => {
     console.log(`📍 Navegación: ${location.pathname}${location.search}`);
   }, [location]);
 
-  // 🌐 Monitoreo de conexión
   useEffect(() => {
-    const handleOnline = () => {
-      console.log("✅ Conexión restaurada");
-      setIsOnline(true);
-    };
-
-    const handleOffline = () => {
-      console.warn("🌐 Sin conexión a internet");
-      setIsOnline(false);
-    };
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
@@ -50,17 +41,6 @@ function RouteTracker() {
   }, []);
 
   return null;
-}
-
-// 🎯 Componente de layout principal
-function AppLayout({ children }) {
-  return (
-    <div className="app">
-      {/* 🔔 Notificación de estado de conexión */}
-      <ConnectionStatus />
-      {children}
-    </div>
-  );
 }
 
 // 🌐 Componente para mostrar estado de conexión
@@ -92,62 +72,74 @@ function ConnectionStatus() {
   if (!showNotification) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: "20px",
-        right: "20px",
-        padding: "12px 20px",
-        borderRadius: "8px",
-        fontWeight: "600",
-        fontSize: "0.9rem",
-        zIndex: 10000,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        animation: "slideIn 0.3s ease-out",
-        ...(isOnline
-          ? {
-              backgroundColor: "#4CAF50",
-              color: "white",
-            }
-          : {
-              backgroundColor: "#F44336",
-              color: "white",
-            }),
-      }}
-    >
+    <div style={{
+      position: "fixed", top: "20px", right: "20px", padding: "12px 20px",
+      borderRadius: "8px", fontWeight: "600", fontSize: "0.9rem", zIndex: 10000,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideIn 0.3s ease-out",
+      ...(isOnline ? { backgroundColor: "#4CAF50", color: "white" } 
+                   : { backgroundColor: "#F44336", color: "white" })
+    }}>
       {isOnline ? "✅ Conexión restaurada" : "🌐 Sin conexión a internet"}
     </div>
   );
 }
 
-// 🚀 Componente wrapper para Landing con navegación - CORREGIDO
-function LandingWithNavigation() {
-  const navigate = useNavigate(); // ✅ Ahora está dentro del Router
+// 🎯 Componente de layout principal
+function AppLayout({ children }) {
+  return (
+    <div className="app">
+      <ConnectionStatus />
+      {children}
+    </div>
+  );
+}
 
-  // Función para manejar el clic en "Crear Mis Fotoimanes"
+// 🚀 Componente wrapper para Landing con navegación
+function LandingWithNavigation() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // 🔄 EFECTO PARA REDIRIGIR DESDE PAGOS
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const orderId = searchParams.get('order');
+    const amount = searchParams.get('amount');
+    
+    if (paymentStatus === 'success' && orderId) {
+      console.log('🔄 Redirigiendo a success page');
+      sessionStorage.setItem('pendingOrder', JSON.stringify({
+        orderId, status: 'approved', amount, timestamp: new Date().toISOString()
+      }));
+      setTimeout(() => {
+        navigate(`/success?order=${orderId}&from_redirect=true&amount=${amount}`);
+      }, 500);
+    }
+    else if ((paymentStatus === 'error' || paymentStatus === 'failure') && orderId) {
+      console.log('❌ Redirigiendo a error page');
+      sessionStorage.setItem('failedOrder', JSON.stringify({
+        orderId, status: 'failed', amount, timestamp: new Date().toISOString()
+      }));
+      setTimeout(() => {
+        navigate(`/error?order=${orderId}&from_redirect=true&status=failed`);
+      }, 500);
+    }
+  }, [searchParams, navigate]);
+
   const handleCtaClick = (e) => {
     e.preventDefault();
     navigate('/crear-fotoimanes');
   };
 
-  // Función para scroll suave
   const handleSmoothScroll = (e, targetId) => {
     e.preventDefault();
     const element = document.querySelector(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
   };
 
-  return (
-    <Landing 
-      onCtaClick={handleCtaClick} 
-      onSmoothScroll={handleSmoothScroll} 
-    />
-  );
+  return <Landing onCtaClick={handleCtaClick} onSmoothScroll={handleSmoothScroll} />;
 }
 
-// 🎯 Error Boundary para capturar errores globales
+// 🎯 Error Boundary
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -159,124 +151,38 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("🚨 Error capturado por Error Boundary:", {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString(),
-    });
+    console.error("🚨 Error capturado:", error);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "Poppins, sans-serif",
-          }}
-        >
-          <h1 style={{ color: "#C0392B", marginBottom: "1rem" }}>
-            ⚠️ Algo salió mal
-          </h1>
-          <p style={{ color: "#666", marginBottom: "2rem" }}>
-            Ocurrió un error inesperado. Por favor, recargá la página.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              backgroundColor: "#BCA88F",
-              color: "white",
-              border: "none",
-              padding: "12px 24px",
-              borderRadius: "8px",
-              fontWeight: "600",
-              cursor: "pointer",
-            }}
-          >
+        <div style={{ padding: '2rem', textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h1 style={{ color: "#C0392B", marginBottom: "1rem" }}>⚠️ Algo salió mal</h1>
+          <p style={{ color: "#666", marginBottom: "2rem" }}>Por favor, recargá la página.</p>
+          <button onClick={() => window.location.reload()} style={{ backgroundColor: "#BCA88F", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>
             🔄 Recargar página
           </button>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
 
-// 🚀 Componente principal de la aplicación
+// 🚀 Componente principal
 export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        {/* 📊 Componente para tracking y monitoreo */}
         <RouteTracker />
-
         <AppLayout>
           <Routes>
-            {/* Ruta principal que usa el componente Landing */}
             <Route path="/" element={<LandingWithNavigation />} />
-
-            {/* Ruta para el formulario de subida */}
             <Route path="/crear-fotoimanes" element={<UploadForm />} />
-
-            {/* Página de éxito después del pago */}
             <Route path="/success" element={<SuccessPage />} />
-
-            {/* Página de error o cancelación */}
             <Route path="/error" element={<ErrorPage />} />
-
-            {/* ✅ Página de Precios */}
             <Route path="/precios" element={<Precios />} />
-
-            {/* Página de pending (opcional) */}
-            <Route
-              path="/pending"
-              element={
-                <div
-                  style={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding: "2rem",
-                    textAlign: "center",
-                    fontFamily: "Poppins, sans-serif",
-                  }}
-                >
-                  <h1 style={{ color: "#FF9800", marginBottom: "1rem" }}>
-                    ⏳ Pago en proceso
-                  </h1>
-                  <p style={{ color: "#666", marginBottom: "2rem" }}>
-                    Estamos procesando tu pago. Te notificaremos cuando se
-                    complete.
-                  </p>
-                  <button
-                    onClick={() => (window.location.href = "/")}
-                    style={{
-                      backgroundColor: "#BCA88F",
-                      color: "white",
-                      border: "none",
-                      padding: "12px 24px",
-                      borderRadius: "8px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                    }}
-                  >
-                    🏠 Volver al inicio
-                  </button>
-                </div>
-              }
-            />
-
-            {/* Redirección para rutas no encontradas */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppLayout>
@@ -284,46 +190,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-
-// 📝 Estilos CSS adicionales para las animaciones
-const additionalStyles = `
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.app {
-  min-height: 100vh;
-}
-
-/* Mejoras de accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Mejoras de focus para accesibilidad */
-button:focus-visible {
-  outline: 2px solid #BCA88F;
-  outline-offset: 2px;
-}
-
-/* Scroll suave */
-html {
-  scroll-behavior: smooth;
-}
-`;
-
-// 🎨 Inyectar estilos adicionales
-const styleSheet = document.createElement("style");
-styleSheet.innerText = additionalStyles;
-document.head.appendChild(styleSheet);

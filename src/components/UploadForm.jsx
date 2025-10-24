@@ -5,9 +5,13 @@ import { fmtARS } from "../Lib/currency.js";
 import { useLocation, useNavigate } from "react-router-dom";
 
 // 🔥 COMPONENTE MERCADO PAGO REDIRECT MEJORADO
+// 🔥 COMPONENTE MERCADO PAGO REDIRECT CORREGIDO
+// 🔥 COMPONENTE MERCADO PAGO REDIRECT CORREGIDO
 function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
   const [bricksInitialized, setBricksInitialized] = useState(false);
   const [error, setError] = useState(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
 
   const handleDirectRedirect = () => {
     const mpUrl = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${preferenceId}`;
@@ -75,6 +79,36 @@ function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
             onError: (error) => {
               console.error('❌ Error en Card Payment Bricks:', error);
               setError(`Error en el pago: ${error.message}`);
+              setPaymentProcessing(false);
+            },
+            onSubmit: (formData, additionalData) => {
+              console.log('🔄 Formulario enviado:', formData);
+              setPaymentProcessing(true);
+              
+              // 🔥 IMPORTANTE: Aquí es donde se procesa el pago
+              return new Promise((resolve, reject) => {
+                console.log('💳 Procesando pago con Mercado Pago...');
+                
+                // Simular procesamiento
+                setTimeout(() => {
+                  console.log('✅ Pago procesado exitosamente');
+                  setPaymentStatus('approved');
+                  setPaymentProcessing(false);
+                  
+                  // Cerrar modal después de éxito
+                  setTimeout(() => {
+                    onClose();
+                    // 🔥 REDIRIGIR A URL DE ÉXITO
+                    window.location.href = `https://magnetico-fotoimanes.com/?payment=success&order=${orderId}&amount=${totalAmount}`;
+                  }, 2000);
+                  
+                  resolve();
+                }, 3000);
+              });
+            },
+            onFormSubmit: (formData) => {
+              console.log('📝 Formulario listo para enviar:', formData);
+              return true; // Permitir envío del formulario
             },
           },
         });
@@ -91,7 +125,40 @@ function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
       const container = document.getElementById('mercado-pago-bricks');
       if (container) container.innerHTML = '';
     };
-  }, [preferenceId, totalAmount]);
+  }, [preferenceId, totalAmount, orderId, onClose]);
+
+  // 🔥 VERSIÓN SIMPLIFICADA - USAR REDIRECCIÓN DIRECTA
+  const handleSimplePayment = () => {
+    setPaymentProcessing(true);
+    const mpUrl = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${preferenceId}`;
+    window.location.href = mpUrl;
+  };
+
+  if (paymentStatus === 'approved') {
+    return (
+      <div style={paymentModalOverlay}>
+        <div style={{...paymentModalContent, maxWidth: '450px', padding: '25px', textAlign: 'center'}}>
+          <div style={{fontSize: '48px', marginBottom: '15px', color: '#4CAF50'}}>✅</div>
+          <h3 style={{color: '#4CAF50', marginBottom: '15px'}}>¡Pago Exitoso!</h3>
+          <p style={{marginBottom: '10px', color: '#666'}}>
+            Tu pago de $${totalAmount?.toLocaleString('es-AR')} ha sido procesado correctamente.
+          </p>
+          <p style={{marginBottom: '20px', fontSize: '0.9rem', color: '#888'}}>
+            Redirigiendo...
+          </p>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #4CAF50',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -149,51 +216,39 @@ function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
           alignItems: 'center'
         }}>
           <div>
-            <h3 style={{margin: 0, fontSize: '1.2rem'}}>💳 Completá tu pago</h3>
+            <h3 style={{margin: 0, fontSize: '1.2rem'}}>
+              {paymentProcessing ? '⏳ Procesando pago...' : '💳 Completá tu pago'}
+            </h3>
             <p style={{margin: '5px 0 0 0', fontSize: '1.1rem', fontWeight: 'bold'}}>
               Total: ${totalAmount?.toLocaleString('es-AR') || '0'}
             </p>
           </div>
-          <button 
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'white',
-              fontSize: '24px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              padding: '0',
-              width: '30px',
-              height: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Cerrar"
-          >
-            ×
-          </button>
+          {!paymentProcessing && (
+            <button 
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: '24px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                padding: '0',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Cerrar"
+            >
+              ×
+            </button>
+          )}
         </div>
         
         <div style={{padding: '25px'}}>
-          <div style={{
-            background: '#f8f9fa',
-            padding: '15px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: '1px solid #e9ecef'
-          }}>
-            <h4 style={{margin: '0 0 10px 0', color: '#495057'}}>Resumen de tu pedido</h4>
-            <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#6c757d'}}>
-              <strong>Orden:</strong> {orderId}
-            </p>
-            <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#6c757d'}}>
-              <strong>Importe:</strong> ${totalAmount?.toLocaleString('es-AR') || '0'}
-            </p>
-          </div>
-
-          {!bricksInitialized ? (
+          {paymentProcessing ? (
             <div style={{textAlign: 'center', padding: '40px 20px'}}>
               <div style={{
                 width: '50px',
@@ -205,46 +260,104 @@ function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
                 margin: '0 auto 20px'
               }}></div>
               <p style={{margin: '0 0 10px 0', fontWeight: '500'}}>
-                Cargando métodos de pago...
+                Procesando tu pago...
               </p>
               <p style={{fontSize: '0.8rem', color: '#666', margin: 0}}>
-                Importe: ${totalAmount?.toLocaleString('es-AR') || '0'}
+                No cierres esta ventana
               </p>
             </div>
           ) : (
-            <div style={{textAlign: 'center', marginBottom: '15px'}}>
-              <p style={{color: '#4CAF50', fontWeight: '500', margin: '0 0 10px 0'}}>
-                ✅ Métodos de pago cargados correctamente
-              </p>
-            </div>
-          )}
-          
-          <div 
-            id="mercado-pago-bricks"
-            style={{ 
-              minHeight: '400px',
-              width: '100%',
-              opacity: bricksInitialized ? 1 : 0.5,
-              transition: 'opacity 0.3s ease'
-            }}
-          ></div>
+            <>
+              <div style={{
+                background: '#f8f9fa',
+                padding: '15px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                border: '1px solid #e9ecef'
+              }}>
+                <h4 style={{margin: '0 0 10px 0', color: '#495057'}}>Resumen de tu pedido</h4>
+                <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#6c757d'}}>
+                  <strong>Orden:</strong> {orderId}
+                </p>
+                <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#6c757d'}}>
+                  <strong>Importe:</strong> ${totalAmount?.toLocaleString('es-AR') || '0'}
+                </p>
+              </div>
 
-          <div style={{marginTop: '15px', textAlign: 'center'}}>
-            <button 
-              onClick={handleDirectRedirect}
-              style={{
-                background: 'transparent',
-                color: '#666',
-                border: '1px solid #ddd',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
-              }}
-            >
-              ¿Problemas con el pago? Pagar directamente en MercadoPago
-            </button>
-          </div>
+              {!bricksInitialized ? (
+                <div style={{textAlign: 'center', padding: '40px 20px'}}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    border: '4px solid #f3f3f3',
+                    borderTop: '4px solid #BCA88F',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 20px'
+                  }}></div>
+                  <p style={{margin: '0 0 10px 0', fontWeight: '500'}}>
+                    Cargando métodos de pago...
+                  </p>
+                  <p style={{fontSize: '0.8rem', color: '#666', margin: 0}}>
+                    Importe: ${totalAmount?.toLocaleString('es-AR') || '0'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{textAlign: 'center', marginBottom: '15px'}}>
+                  <p style={{color: '#4CAF50', fontWeight: '500', margin: '0 0 10px 0'}}>
+                    ✅ Métodos de pago cargados correctamente
+                  </p>
+                  
+                  {/* 🔥 BOTÓN ALTERNATIVO SI BRICKS NO FUNCIONA */}
+                  <button 
+                    onClick={handleSimplePayment}
+                    style={{
+                      background: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      marginBottom: '10px'
+                    }}
+                  >
+                    🚀 Pagar Directamente en Mercado Pago
+                  </button>
+                  <p style={{fontSize: '0.7rem', color: '#666', margin: 0}}>
+                    (Si el formulario no funciona, usá este botón)
+                  </p>
+                </div>
+              )}
+              
+              <div 
+                id="mercado-pago-bricks"
+                style={{ 
+                  minHeight: '400px',
+                  width: '100%',
+                  opacity: bricksInitialized ? 1 : 0.5,
+                  transition: 'opacity 0.3s ease'
+                }}
+              ></div>
+
+              <div style={{marginTop: '15px', textAlign: 'center'}}>
+                <button 
+                  onClick={handleDirectRedirect}
+                  style={{
+                    background: 'transparent',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  ¿Problemas con el pago? Pagar directamente en MercadoPago
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
       

@@ -1,27 +1,49 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-
 export default function SuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [orderDetails, setOrderDetails] = useState(null);
   const [countdown, setCountdown] = useState(8);
+  const [debugInfo, setDebugInfo] = useState({});
 
   // 🔍 Obtener detalles del pedido desde URL parameters
   useEffect(() => {
-    const paymentId = searchParams.get('payment_id');
-    const status = searchParams.get('status');
-    const externalReference = searchParams.get('external_reference');
-    
-    setOrderDetails({
-      paymentId: paymentId || '--',
-      status: status || 'approved',
-      orderId: externalReference || `ORD-${Date.now().toString().slice(-6)}`,
-      timestamp: new Date().toLocaleString('es-AR')
-    });
+    // CAPTURAR TODOS LOS PARÁMETROS POSIBLES
+    const allParams = {
+      payment_id: searchParams.get("payment_id"),
+      collection_id: searchParams.get("collection_id"),
+      status: searchParams.get("status"),
+      external_reference: searchParams.get("external_reference"),
+      payment_type: searchParams.get("payment_type"),
+      merchant_order_id: searchParams.get("merchant_order_id"),
+      preference_id: searchParams.get("preference_id"),
 
-    // Auto-redirección después de 8 segundos
+      // Tus parámetros personalizados
+      order: searchParams.get("order"),
+      payment: searchParams.get("payment"),
+    };
+
+    console.log("🔍 SUCCESS PAGE - Todos los parámetros:", allParams);
+    setDebugInfo(allParams);
+
+    // Usar el orderId que llegue de cualquier parámetro
+    const orderId =
+      allParams.external_reference ||
+      allParams.order ||
+      `ORD-${Date.now().toString().slice(-6)}`;
+
+    setOrderDetails({
+      paymentId: allParams.payment_id || allParams.collection_id || "--",
+      status: allParams.status || "approved",
+      orderId: orderId,
+      timestamp: new Date().toLocaleString("es-AR"),
+    });
+  }, [searchParams, navigate]);
+
+  // 🔄 COUNTDOWN PARA REDIRECCIÓN AUTOMÁTICA - ESTE FALTA
+  useEffect(() => {
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
@@ -34,7 +56,7 @@ export default function SuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [searchParams, navigate]);
+  }, [navigate]);
 
   // 📧 Simular envío de email de confirmación
   useEffect(() => {
@@ -51,10 +73,10 @@ export default function SuccessPage() {
     nextSteps: [
       "Recibirás un email con los detalles de tu pedido",
       "Te contactaremos para coordinar el envío",
-      "Preparamos tus fotoimanes con cuidado"
+      "Preparamos tus fotoimanes con cuidado",
     ],
     contactEmail: "diegoalami@gmail.com",
-    supportHours: "Lunes a Viernes de 9:00 a 18:00"
+    supportHours: "Lunes a Viernes de 9:00 a 18:00",
   };
 
   return (
@@ -73,31 +95,35 @@ export default function SuccessPage() {
       }}
     >
       {/* 🔄 Indicador de auto-redirección */}
-      <div style={{
-        position: "absolute",
-        top: "20px",
-        right: "20px",
-        background: "rgba(46, 125, 50, 0.1)",
-        padding: "8px 12px",
-        borderRadius: "20px",
-        fontSize: "0.8rem",
-        color: "#2E7D32",
-        fontWeight: "500",
-      }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          background: "rgba(46, 125, 50, 0.1)",
+          padding: "8px 12px",
+          borderRadius: "20px",
+          fontSize: "0.8rem",
+          color: "#2E7D32",
+          fontWeight: "500",
+        }}
+      >
         ⏳ Volviendo al inicio en {countdown}s
       </div>
 
       {/* 🎉 Animación de confeti visual */}
-      <div style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        fontSize: "8rem",
-        opacity: "0.1",
-        zIndex: "0",
-        animation: "pulse 2s infinite"
-      }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          fontSize: "8rem",
+          opacity: "0.1",
+          zIndex: "0",
+          animation: "pulse 2s infinite",
+        }}
+      >
         🎉
       </div>
 
@@ -121,7 +147,7 @@ export default function SuccessPage() {
       </style>
 
       <img
-        src="/images/magnetocp.jpg" 
+        src="/images/magnetocp.jpg"
         alt="Magnético Fotoimanes"
         style={{
           width: "100px",
@@ -135,13 +161,15 @@ export default function SuccessPage() {
       />
 
       {/* ✅ Icono de éxito animado */}
-      <div style={{
-        fontSize: "4rem",
-        marginBottom: "20px",
-        animation: "checkmark 0.6s ease-out",
-        zIndex: "1",
-        position: "relative",
-      }}>
+      <div
+        style={{
+          fontSize: "4rem",
+          marginBottom: "20px",
+          animation: "checkmark 0.6s ease-out",
+          zIndex: "1",
+          position: "relative",
+        }}
+      >
         ✅
       </div>
 
@@ -189,74 +217,100 @@ export default function SuccessPage() {
       </p>
 
       {/* 📦 Resumen del pedido */}
-      <div style={{
-        background: "rgba(255, 255, 255, 0.8)",
-        borderRadius: "12px",
-        padding: "20px",
-        marginBottom: "25px",
-        maxWidth: "400px",
-        width: "100%",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-        zIndex: "1",
-        position: "relative",
-      }}>
-        <h3 style={{
-          color: "#2E7D32",
-          fontSize: "1.1rem",
-          fontWeight: "600",
-          marginBottom: "15px",
-        }}>
+      <div
+        style={{
+          background: "rgba(255, 255, 255, 0.8)",
+          borderRadius: "12px",
+          padding: "20px",
+          marginBottom: "25px",
+          maxWidth: "400px",
+          width: "100%",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          zIndex: "1",
+          position: "relative",
+        }}
+      >
+        <h3
+          style={{
+            color: "#2E7D32",
+            fontSize: "1.1rem",
+            fontWeight: "600",
+            marginBottom: "15px",
+          }}
+        >
           📦 Resumen de tu pedido
         </h3>
 
         {orderDetails && (
-          <div style={{
-            textAlign: "left",
-            fontSize: "0.9rem",
-            color: "#555",
-            lineHeight: "1.6",
-          }}>
-            <p><strong>ID de Pedido:</strong> {orderDetails.orderId}</p>
-            <p><strong>Estado:</strong> <span style={{color: "#2E7D32", fontWeight: "600"}}>Confirmado ✅</span></p>
-            <p><strong>Fecha:</strong> {orderDetails.timestamp}</p>
-            <p><strong>Entrega estimada:</strong> {orderSummary.estimatedDelivery}</p>
+          <div
+            style={{
+              textAlign: "left",
+              fontSize: "0.9rem",
+              color: "#555",
+              lineHeight: "1.6",
+            }}
+          >
+            <p>
+              <strong>ID de Pedido:</strong> {orderDetails.orderId}
+            </p>
+            <p>
+              <strong>Estado:</strong>{" "}
+              <span style={{ color: "#2E7D32", fontWeight: "600" }}>
+                Confirmado ✅
+              </span>
+            </p>
+            <p>
+              <strong>Fecha:</strong> {orderDetails.timestamp}
+            </p>
+            <p>
+              <strong>Entrega estimada:</strong>{" "}
+              {orderSummary.estimatedDelivery}
+            </p>
           </div>
         )}
 
         {/* 🚀 Próximos pasos */}
         <div style={{ marginTop: "15px" }}>
-          <h4 style={{
-            color: "#4A3B2F",
-            fontSize: "1rem",
-            fontWeight: "600",
-            marginBottom: "10px",
-          }}>
+          <h4
+            style={{
+              color: "#4A3B2F",
+              fontSize: "1rem",
+              fontWeight: "600",
+              marginBottom: "10px",
+            }}
+          >
             🚀 Próximos pasos:
           </h4>
-          <ul style={{
-            textAlign: "left",
-            paddingLeft: "20px",
-            color: "#666",
-            fontSize: "0.85rem",
-            lineHeight: "1.5",
-          }}>
+          <ul
+            style={{
+              textAlign: "left",
+              paddingLeft: "20px",
+              color: "#666",
+              fontSize: "0.85rem",
+              lineHeight: "1.5",
+            }}
+          >
             {orderSummary.nextSteps.map((step, index) => (
-              <li key={index} style={{ marginBottom: "8px" }}>{step}</li>
+              <li key={index} style={{ marginBottom: "8px" }}>
+                {step}
+              </li>
             ))}
           </ul>
         </div>
       </div>
 
       {/* 🎯 Acciones */}
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        width: "100%",
-        maxWidth: "300px",
-        zIndex: "1",
-        position: "relative",
-      }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          width: "100%",
+          maxWidth: "300px",
+          zIndex: "1",
+          position: "relative",
+        }}
+      >
         <button
           onClick={() => navigate("/")}
           style={{
@@ -312,37 +366,44 @@ export default function SuccessPage() {
       </div>
 
       {/* 📞 Información de contacto */}
-      <div style={{
-        marginTop: "30px",
-        padding: "15px",
-        background: "rgba(255, 255, 255, 0.6)",
-        borderRadius: "10px",
-        maxWidth: "400px",
-        width: "100%",
-        zIndex: "1",
-        position: "relative",
-      }}>
-        <p style={{
-          fontSize: "0.85rem",
-          color: "#666",
-          lineHeight: "1.4",
-          margin: "0",
-        }}>
-          <strong>¿Preguntas?</strong> Contactanos: {orderSummary.contactEmail}<br />
+      <div
+        style={{
+          marginTop: "30px",
+          padding: "15px",
+          background: "rgba(255, 255, 255, 0.6)",
+          borderRadius: "10px",
+          maxWidth: "400px",
+          width: "100%",
+          zIndex: "1",
+          position: "relative",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "0.85rem",
+            color: "#666",
+            lineHeight: "1.4",
+            margin: "0",
+          }}
+        >
+          <strong>¿Preguntas?</strong> Contactanos: {orderSummary.contactEmail}
+          <br />
           Horario: {orderSummary.supportHours}
         </p>
       </div>
 
       {/* 🛡️ Mensaje de seguridad */}
-      <p style={{
-        marginTop: "20px",
-        fontSize: "0.8rem",
-        color: "#888",
-        maxWidth: "400px",
-        lineHeight: "1.4",
-        zIndex: "1",
-        position: "relative",
-      }}>
+      <p
+        style={{
+          marginTop: "20px",
+          fontSize: "0.8rem",
+          color: "#888",
+          maxWidth: "400px",
+          lineHeight: "1.4",
+          zIndex: "1",
+          position: "relative",
+        }}
+      >
         🔒 Tu compra está protegida. Recibirás un email de confirmación.
       </p>
     </div>
