@@ -1,10 +1,16 @@
-// src/Lib/api.js - VERSIÓN DEFINITIVA PARA PRODUCCIÓN
+// src/Lib/api.js - VERSIÓN PARA DONWEB
 import axios from "axios";
 
-// 🚀 Configuración para producción
+// 🚀 Configuración para DonWeb
 const getBaseURL = () => {
-  // En producción, siempre usar el servidor en Render
-  return "https://magnetico-server-1.onrender.com/api";
+  // En producción, usar el servidor en DonWeb
+  if (typeof window !== 'undefined') {
+    // En el cliente (frontend)
+    return "https://magnetico-fotoimanes.com/api";
+  } else {
+    // En el servidor (si hay SSR)
+    return "https://magnetico-fotoimanes.com/api";
+  }
 };
 
 // 🚀 Crear instancia de axios

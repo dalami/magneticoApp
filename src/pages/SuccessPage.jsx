@@ -42,7 +42,7 @@ export default function SuccessPage() {
     });
   }, [searchParams, navigate]);
 
-  // 🔄 COUNTDOWN PARA REDIRECCIÓN AUTOMÁTICA - ESTE FALTA
+  // 🔄 COUNTDOWN PARA REDIRECCIÓN AUTOMÁTICA
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown(prev => {
@@ -69,11 +69,11 @@ export default function SuccessPage() {
 
   // 🎯 Datos del pedido (simulados - en producción vendrían de la API)
   const orderSummary = {
-    estimatedDelivery: "3-5 días hábiles",
     nextSteps: [
       "Recibirás un email con los detalles de tu pedido",
-      "Te contactaremos para coordinar el envío",
-      "Preparamos tus fotoimanes con cuidado",
+      "Te contactaremos para coordinar el envío y costos",
+      "Preparamos tus fotoimanes con cuidado y calidad",
+      "Una vez listos, coordinaremos la entrega"
     ],
     contactEmail: "diegoalami@gmail.com",
     supportHours: "Lunes a Viernes de 9:00 a 18:00",
@@ -223,7 +223,7 @@ export default function SuccessPage() {
           borderRadius: "12px",
           padding: "20px",
           marginBottom: "25px",
-          maxWidth: "400px",
+          maxWidth: "450px",
           width: "100%",
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           zIndex: "1",
@@ -262,12 +262,49 @@ export default function SuccessPage() {
             <p>
               <strong>Fecha:</strong> {orderDetails.timestamp}
             </p>
-            <p>
-              <strong>Entrega estimada:</strong>{" "}
-              {orderSummary.estimatedDelivery}
-            </p>
           </div>
         )}
+
+        {/* 🚚 INFORMACIÓN DE ENVÍO BIEN VISIBLE */}
+        <div
+          style={{
+            background: "rgba(33, 150, 243, 0.1)",
+            border: "2px solid #2196F3",
+            borderRadius: "8px",
+            padding: "15px",
+            margin: "15px 0",
+            textAlign: "center",
+          }}
+        >
+          <h4
+            style={{
+              color: "#1976D2",
+              fontSize: "1rem",
+              fontWeight: "700",
+              marginBottom: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}
+          >
+            🚚 Información de Envío
+          </h4>
+          <p
+            style={{
+              color: "#1976D2",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+              margin: "0",
+              lineHeight: "1.4"
+            }}
+          >
+            El envío se coordina según tu ubicación<br />
+            <span style={{ fontSize: "0.8rem", fontWeight: "500" }}>
+              Te contactaremos para acordar costo y método de entrega
+            </span>
+          </p>
+        </div>
 
         {/* 🚀 Próximos pasos */}
         <div style={{ marginTop: "15px" }}>

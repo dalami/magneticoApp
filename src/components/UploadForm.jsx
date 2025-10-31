@@ -5,8 +5,6 @@ import { fmtARS } from "../Lib/currency.js";
 import { useLocation, useNavigate } from "react-router-dom";
 
 // 🔥 COMPONENTE MERCADO PAGO REDIRECT MEJORADO
-// 🔥 COMPONENTE MERCADO PAGO REDIRECT CORREGIDO
-// 🔥 COMPONENTE MERCADO PAGO REDIRECT CORREGIDO
 function MercadoPagoRedirect({ preferenceId, orderId, onClose, totalAmount }) {
   const [bricksInitialized, setBricksInitialized] = useState(false);
   const [error, setError] = useState(null);
@@ -817,15 +815,17 @@ export default function UploadForm() {
     <div
       style={{
         background: "#fff",
-        padding: "2rem",
+        padding: "1rem",
         borderRadius: "18px",
         boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         maxWidth: "480px",
         width: "95%",
-        margin: "2rem auto",
+        margin: "1rem auto",
         textAlign: "center",
         fontFamily: "Poppins, sans-serif",
         position: "relative",
+        maxHeight: "85vh",
+        overflowY: "auto",
       }}
     >
       {/* BOTÓN VOLVER */}
@@ -834,19 +834,19 @@ export default function UploadForm() {
         disabled={loading}
         style={{
           position: "absolute",
-          top: "20px",
-          right: "20px",
+          top: "15px",
+          right: "15px",
           background: "transparent",
           border: "1px solid #BCA88F",
           color: "#BCA88F",
-          padding: "8px 16px",
+          padding: "6px 12px",
           borderRadius: "8px",
           cursor: loading ? "not-allowed" : "pointer",
-          fontSize: "0.9rem",
+          fontSize: "0.8rem",
           fontWeight: "500",
           display: "flex",
           alignItems: "center",
-          gap: "5px",
+          gap: "3px",
           opacity: loading ? 0.5 : 1,
           transition: "all 0.3s ease",
           zIndex: 10,
@@ -865,8 +865,8 @@ export default function UploadForm() {
         }}
       >
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -881,14 +881,20 @@ export default function UploadForm() {
         src="/images/magnetocp.jpg"
         alt="Magnético"
         style={{
-          width: 100,
-          height: 100,
+          width: 80,
+          height: 80,
           borderRadius: "12px",
           objectFit: "cover",
-          marginBottom: "10px",
+          marginBottom: "8px",
+          marginTop: "10px",
         }}
       />
-      <h2 style={{ fontWeight: 600, color: "#3B2F2F" }}>
+      <h2 style={{ 
+        fontWeight: 600, 
+        color: "#3B2F2F",
+        fontSize: "1.3rem",
+        margin: "5px 0 15px 0"
+      }}>
         Magnético Fotoimanes
       </h2>
 
@@ -1184,6 +1190,7 @@ export default function UploadForm() {
           fontSize: "1rem",
           cursor: isButtonDisabled ? "not-allowed" : "pointer",
           transition: "background 0.3s ease",
+          marginBottom: "10px",
         }}
         onMouseEnter={(e) => {
           if (!isButtonDisabled) {
@@ -1324,6 +1331,38 @@ export default function UploadForm() {
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        /* Estilos para mejorar el scroll en móviles */
+        @media (max-width: 480px) {
+          body {
+            overflow-y: auto !important;
+          }
+        }
+        
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: #BCA88F;
+          border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: #A8927A;
+        }
+      `}</style>
     </div>
   );
 }

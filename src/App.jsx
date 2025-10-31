@@ -7,16 +7,19 @@ import {
   Navigate,
   useLocation,
   useNavigate,
-  useSearchParams
+  useSearchParams,
 } from "react-router-dom";
 
-import Landing from "./pages/Landing.jsx"
+import Landing from "./pages/Landing.jsx";
 import UploadForm from "./components/UploadForm.jsx";
 import SuccessPage from "./pages/SuccessPage.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
-import Precios from "./pages/Precios.jsx"
+import Precios from "./pages/Precios.jsx";
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import ShippingPolicy from './pages/ShippingPolicy';
 import "./style.css";
-import "./App.css"
+import "./App.css";
 
 // 🎯 Componente para tracking de analytics
 function RouteTracker() {
@@ -72,13 +75,23 @@ function ConnectionStatus() {
   if (!showNotification) return null;
 
   return (
-    <div style={{
-      position: "fixed", top: "20px", right: "20px", padding: "12px 20px",
-      borderRadius: "8px", fontWeight: "600", fontSize: "0.9rem", zIndex: 10000,
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideIn 0.3s ease-out",
-      ...(isOnline ? { backgroundColor: "#4CAF50", color: "white" } 
-                   : { backgroundColor: "#F44336", color: "white" })
-    }}>
+    <div
+      style={{
+        position: "fixed",
+        top: "20px",
+        right: "20px",
+        padding: "12px 20px",
+        borderRadius: "8px",
+        fontWeight: "600",
+        fontSize: "0.9rem",
+        zIndex: 10000,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        animation: "slideIn 0.3s ease-out",
+        ...(isOnline
+          ? { backgroundColor: "#4CAF50", color: "white" }
+          : { backgroundColor: "#F44336", color: "white" }),
+      }}
+    >
       {isOnline ? "✅ Conexión restaurada" : "🌐 Sin conexión a internet"}
     </div>
   );
@@ -101,24 +114,40 @@ function LandingWithNavigation() {
 
   // 🔄 EFECTO PARA REDIRIGIR DESDE PAGOS
   useEffect(() => {
-    const paymentStatus = searchParams.get('payment');
-    const orderId = searchParams.get('order');
-    const amount = searchParams.get('amount');
-    
-    if (paymentStatus === 'success' && orderId) {
-      console.log('🔄 Redirigiendo a success page');
-      sessionStorage.setItem('pendingOrder', JSON.stringify({
-        orderId, status: 'approved', amount, timestamp: new Date().toISOString()
-      }));
+    const paymentStatus = searchParams.get("payment");
+    const orderId = searchParams.get("order");
+    const amount = searchParams.get("amount");
+
+    if (paymentStatus === "success" && orderId) {
+      console.log("🔄 Redirigiendo a success page");
+      sessionStorage.setItem(
+        "pendingOrder",
+        JSON.stringify({
+          orderId,
+          status: "approved",
+          amount,
+          timestamp: new Date().toISOString(),
+        })
+      );
       setTimeout(() => {
-        navigate(`/success?order=${orderId}&from_redirect=true&amount=${amount}`);
+        navigate(
+          `/success?order=${orderId}&from_redirect=true&amount=${amount}`
+        );
       }, 500);
-    }
-    else if ((paymentStatus === 'error' || paymentStatus === 'failure') && orderId) {
-      console.log('❌ Redirigiendo a error page');
-      sessionStorage.setItem('failedOrder', JSON.stringify({
-        orderId, status: 'failed', amount, timestamp: new Date().toISOString()
-      }));
+    } else if (
+      (paymentStatus === "error" || paymentStatus === "failure") &&
+      orderId
+    ) {
+      console.log("❌ Redirigiendo a error page");
+      sessionStorage.setItem(
+        "failedOrder",
+        JSON.stringify({
+          orderId,
+          status: "failed",
+          amount,
+          timestamp: new Date().toISOString(),
+        })
+      );
       setTimeout(() => {
         navigate(`/error?order=${orderId}&from_redirect=true&status=failed`);
       }, 500);
@@ -127,16 +156,18 @@ function LandingWithNavigation() {
 
   const handleCtaClick = (e) => {
     e.preventDefault();
-    navigate('/crear-fotoimanes');
+    navigate("/crear-fotoimanes");
   };
 
   const handleSmoothScroll = (e, targetId) => {
     e.preventDefault();
     const element = document.querySelector(targetId);
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
+    if (element) element.scrollIntoView({ behavior: "smooth" });
   };
 
-  return <Landing onCtaClick={handleCtaClick} onSmoothScroll={handleSmoothScroll} />;
+  return (
+    <Landing onCtaClick={handleCtaClick} onSmoothScroll={handleSmoothScroll} />
+  );
 }
 
 // 🎯 Error Boundary
@@ -157,10 +188,34 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '2rem', textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <h1 style={{ color: "#C0392B", marginBottom: "1rem" }}>⚠️ Algo salió mal</h1>
-          <p style={{ color: "#666", marginBottom: "2rem" }}>Por favor, recargá la página.</p>
-          <button onClick={() => window.location.reload()} style={{ backgroundColor: "#BCA88F", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>
+        <div
+          style={{
+            padding: "2rem",
+            textAlign: "center",
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
+          <h1 style={{ color: "#C0392B", marginBottom: "1rem" }}>
+            ⚠️ Algo salió mal
+          </h1>
+          <p style={{ color: "#666", marginBottom: "2rem" }}>
+            Por favor, recargá la página.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: "#BCA88F",
+              color: "white",
+              border: "none",
+              padding: "12px 24px",
+              borderRadius: "8px",
+              fontWeight: "600",
+              cursor: "pointer",
+            }}
+          >
             🔄 Recargar página
           </button>
         </div>
@@ -184,6 +239,9 @@ export default function App() {
             <Route path="/error" element={<ErrorPage />} />
             <Route path="/precios" element={<Precios />} />
             <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/terminos-condiciones"element={<TermsAndConditions />}/>
+            <Route path="/politica-privacidad" element={<PrivacyPolicy />} />
+            <Route path="/politica-envios" element={<ShippingPolicy />} />
           </Routes>
         </AppLayout>
       </BrowserRouter>

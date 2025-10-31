@@ -6,7 +6,7 @@ export default defineConfig({
   define: {
     'process.env': process.env
   },
-  base: '/', // 🔥 CAMBIAR de './' a '/'
+  base: '/',
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -15,7 +15,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://magnetico-server-1.onrender.com',
+        target: 'https://magnetico-fotoimanes.com', // ✅ CAMBIAR A DONWEB
         changeOrigin: true,
         secure: false,
       }
